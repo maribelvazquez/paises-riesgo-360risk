@@ -1,0 +1,316 @@
+import React, { useState, useMemo } from 'react';
+
+// --- DATOS CENTRALIZADOS ---
+// Datos consolidados de varias fuentes (GAFI, UE, CPI, GTI, LISR México) a Q3 2025.
+// Esta es una base de datos simulada basada en la investigación.
+const countriesData = [
+    { name: "Afghanistan", nameEs: "Afganistán", gafi: null, euAml: "Alto Riesgo (deficiencias estratégicas)", cpiScore: 16, gtiRank: 1, mexTaxHaven: "No", analysis: "Riesgo extremo por terrorismo y corrupción, combinado con un sistema financiero débil bajo control de un régimen no reconocido internacionalmente." },
+    { name: "Algeria", nameEs: "Argelia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 36, gtiRank: null, mexTaxHaven: "No", analysis: "Bajo monitoreo del GAFI y en la lista de la UE. La percepción de corrupción es un factor de riesgo adicional a considerar." },
+    { name: "Angola", nameEs: "Angola", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 33, gtiRank: null, mexTaxHaven: "No", analysis: "Presente en listas de GAFI y UE por deficiencias en su marco ALD/CFT. La corrupción es un desafío persistente." },
+    { name: "Bulgaria", nameEs: "Bulgaria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 45, gtiRank: null, mexTaxHaven: "No", analysis: "Miembro de la UE bajo monitoreo del GAFI. El riesgo principal se centra en las deficiencias detectadas en su sistema ALD/CFT, no tanto en otras áreas." },
+    { name: "Burkina Faso", nameEs: "Burkina Faso", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 41, gtiRank: 2, mexTaxHaven: "No", analysis: "Riesgo muy alto. Presente en la lista gris del GAFI, lista de la UE y con un altísimo impacto del terrorismo." },
+    { name: "Cameroon", nameEs: "Camerún", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 26, gtiRank: 10, mexTaxHaven: "No", analysis: "Jurisdicción de alto riesgo con presencia en listas ALD/CFT, alta percepción de corrupción y afectado por el terrorismo." },
+    { name: "Cayman Islands", nameEs: "Islas Caimán", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRE)", analysis: "Principalmente un riesgo fiscal. Considerado un paraíso fiscal por múltiples jurisdicciones, incluyendo México (REFIPRE)." },
+    { name: "Democratic Republic of the Congo", nameEs: "República Democrática del Congo", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 20, gtiRank: 17, mexTaxHaven: "No", analysis: "Riesgo sistémico elevado. Deficiencias ALD/CFT, corrupción endémica e inestabilidad y violencia en varias regiones." },
+    { name: "Gibraltar", nameEs: "Gibraltar", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRE)", analysis: "Considerado un régimen fiscal preferente por México. Riesgo centrado en la opacidad fiscal y la planificación fiscal agresiva." },
+    { name: "Haiti", nameEs: "Haití", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 17, gtiRank: null, mexTaxHaven: "No", analysis: "Crisis multifactorial. Graves deficiencias ALD/CFT, corrupción extrema e inestabilidad política y social profunda." },
+    { name: "Iran", nameEs: "Irán", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 25, gtiRank: 23, mexTaxHaven: "No", analysis: "Riesgo crítico. En la lista negra del GAFI, sujeto a contramedidas. Sanciones internacionales, riesgo de proliferación y terrorismo." },
+    { name: "Kenya", nameEs: "Kenia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 31, gtiRank: 16, mexTaxHaven: "No", analysis: "Riesgos significativos en ALD/CFT, corrupción y terrorismo. Su inclusión reciente en listas aumenta el escrutinio." },
+    { name: "Mali", nameEs: "Mali", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 28, gtiRank: 4, mexTaxHaven: "No", analysis: "Riesgo extremo. Fuerte presencia en listas ALD/CFT y uno de los países más afectados por el terrorismo a nivel global." },
+    { name: "Mexico", nameEs: "México", gafi: null, euAml: null, cpiScore: 26, gtiRank: 82, mexTaxHaven: "No", euTax: null, analysis: "México es miembro del GAFI y no se encuentra en ninguna lista de alto riesgo o monitoreo. Sin embargo, enfrenta desafíos significativos relacionados con la percepción de la corrupción (CPI: 26/100) y riesgos de delitos financieros asociados a la delincuencia organizada. Su marco legal ALD/CFT es maduro, pero la efectividad en la implementación es un área de enfoque continuo." },
+    { name: "Monaco", nameEs: "Mónaco", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRE)", analysis: "Riesgo dual. Bajo monitoreo del GAFI por temas ALD/CFT relacionados con su sector de lujo y financiero, y catalogado como paraíso fiscal por México." },
+    { name: "Mozambique", nameEs: "Mozambique", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 25, gtiRank: 11, mexTaxHaven: "No", analysis: "Jurisdicción de alto riesgo con problemas concurrentes de deficiencias ALD/CFT, corrupción y una insurgencia terrorista activa." },
+    { name: "Myanmar", nameEs: "Myanmar", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 20, gtiRank: 9, mexTaxHaven: "No", analysis: "Riesgo crítico. En la lista negra del GAFI por deficiencias graves y falta de progreso. Inestabilidad política y alto impacto del terrorismo." },
+    { name: "Nigeria", nameEs: "Nigeria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 24, gtiRank: 8, mexTaxHaven: "No", analysis: "Riesgo muy alto. Deficiencias ALD/CFT, alta percepción de corrupción y una amenaza terrorista persistente y significativa." },
+    { name: "North Korea", nameEs: "Corea del Norte", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 17, gtiRank: 48, mexTaxHaven: "No", analysis: "Riesgo extremo y único. En la lista negra del GAFI por financiación de la proliferación de armas de destrucción masiva. Sanciones internacionales generalizadas." },
+    { name: "Panama", nameEs: "Panamá", gafi: null, euAml: null, cpiScore: 35, gtiRank: null, mexTaxHaven: "No", euTax: "Lista Negra Fiscal UE", analysis: "Riesgo principalmente fiscal y reputacional. Aunque ha salido de la lista gris del GAFI, permanece en la lista negra fiscal de la UE por falta de cooperación." },
+    { name: "Philippines", nameEs: "Filipinas", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 34, gtiRank: 18, mexTaxHaven: "No", analysis: "Bajo monitoreo del GAFI. Los riesgos se ven agravados por un puntaje de corrupción moderadamente bajo y un ranking significativo en el índice de terrorismo." },
+    { name: "Russia", nameEs: "Rusia", gafi: "Suspendido", euAml: null, cpiScore: 26, gtiRank: 35, euTax: "Lista Negra Fiscal UE", analysis: "Riesgo complejo. Suspensión del GAFI, en la lista negra fiscal de la UE, alta percepción de corrupción y sujeto a amplias sanciones internacionales." },
+    { name: "South Africa", nameEs: "Sudáfrica", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 43, gtiRank: null, mexTaxHaven: "No", analysis: "Centro financiero regional bajo monitoreo del GAFI. Los riesgos se centran en la sofisticación de los delitos financieros que enfrenta." },
+    { name: "Syria", nameEs: "Siria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 13, gtiRank: 5, mexTaxHaven: "No", analysis: "Riesgo extremo. Corrupción endémica, en listas ALD/CFT y uno de los países más impactados por el terrorismo y la guerra civil." },
+    { name: "Tanzania", nameEs: "Tanzania", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "No", analysis: "Bajo monitoreo del GAFI. El riesgo se centra en las deficiencias de su marco ALD/CFT que necesita fortalecer." },
+    { name: "Turkey", nameEs: "Turquía", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 34, gtiRank: 21, mexTaxHaven: "No", analysis: "Jurisdicción estratégicamente importante bajo monitoreo del GAFI. Los riesgos se ven aumentados por su proximidad a zonas de conflicto y su ranking de terrorismo." },
+    { name: "Uganda", nameEs: "Uganda", gafi: null, euAml: null, cpiScore: 26, gtiRank: 15, mexTaxHaven: "No", analysis: "Aunque ya no está en la lista gris del GAFI, persisten riesgos por la alta percepción de corrupción y el impacto del terrorismo en la región." },
+    { name: "United Arab Emirates", nameEs: "Emiratos Árabes Unidos", gafi: null, euAml: null, cpiScore: 68, gtiRank: 79, mexTaxHaven: "No", analysis: "Centro financiero global que ha salido de la lista gris del GAFI. Persiste un riesgo residual por ser un hub para transacciones internacionales complejas." },
+    { name: "Vietnam", nameEs: "Vietnam", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 41, gtiRank: null, mexTaxHaven: "No", analysis: "Bajo monitoreo del GAFI y en la lista de la UE. El riesgo se centra en la necesidad de mejorar la efectividad de su sistema ALD/CFT." },
+    { name: "Yemen", nameEs: "Yemen", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 16, gtiRank: 28, mexTaxHaven: "No", analysis: "Riesgo extremo debido al conflicto armado, colapso institucional, corrupción y presencia en listas ALD/CFT." },
+];
+
+// --- COMPONENTES DE LA UI ---
+
+const colors = {
+  background: '#393e41',
+  card: '#1b1b1e',
+  text: '#f6fff8',
+  accent1: '#ff8361', // Naranja
+  accent2: '#a663cc', // Morado
+  accent3: '#87d895', // Verde
+  textMuted: '#a0aec0',
+};
+
+const RiskIndicator = ({ level, text }) => {
+  const levelStyles = {
+    'Crítico': `bg-red-700 border-red-500`,
+    'Muy Alto': `bg-orange-600 border-orange-400`,
+    'Alto': `bg-yellow-600 border-yellow-400`,
+    'Medio': `bg-blue-600 border-blue-400`,
+    'Bajo': `bg-green-600 border-green-400`,
+    'N/A': `bg-gray-600 border-gray-500`,
+  };
+
+  const getLevel = (status) => {
+    if (!status || status === 'No') return 'N/A';
+    if (status.includes('Negra')) return 'Crítico';
+    if (status.includes('Suspendido')) return 'Crítico';
+    if (status.includes('Gris')) return 'Alto';
+    if (status.includes('Alto Riesgo')) return 'Alto';
+    if (status.includes('Fiscal')) return 'Alto';
+    if (status.includes('REFIPRE')) return 'Alto';
+    return 'Bajo';
+  };
+  
+  const calculatedLevel = getLevel(text);
+
+  return (
+    <span className={`inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-white rounded-full border-2 ${levelStyles[calculatedLevel]}`}>
+      {text || 'No listado'}
+    </span>
+  );
+};
+
+
+const CountryCard = ({ country }) => {
+  if (!country) {
+    return (
+      <div className={`p-8 rounded-lg mt-6 text-center`} style={{backgroundColor: colors.card}}>
+        <p style={{color: colors.textMuted}}>No se encontró el país. Intenta con otro nombre.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`p-6 sm:p-8 rounded-2xl mt-6 shadow-2xl transition-all duration-300`} style={{backgroundColor: colors.card}}>
+      <h3 className="text-3xl sm:text-4xl font-bold mb-6" style={{color: colors.accent2}}>{country.nameEs}</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Prevención de Lavado de Dinero (ALD/CFT)</h4>
+          <div className="space-y-3">
+            <p><span className="font-semibold" style={{color: colors.textMuted}}>GAFI:</span> <RiskIndicator text={country.gafi} /></p>
+            <p><span className="font-semibold" style={{color: colors.textMuted}}>Unión Europea:</span> <RiskIndicator text={country.euAml} /></p>
+          </div>
+        </div>
+        <div>
+          <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Riesgo Fiscal</h4>
+          <div className="space-y-3">
+             <p><span className="font-semibold" style={{color: colors.textMuted}}>UE (No Cooperante):</span> <RiskIndicator text={country.euTax} /></p>
+             <p><span className="font-semibold" style={{color: colors.textMuted}}>México (LISR):</span> <RiskIndicator text={country.mexTaxHaven} /></p>
+          </div>
+        </div>
+        <div>
+          <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Otros Indicadores de Riesgo</h4>
+          <div className="space-y-3">
+            <p><span className="font-semibold" style={{color: colors.textMuted}}>Índice de Percepción de Corrupción (CPI):</span> {country.cpiScore ? `${country.cpiScore}/100` : 'N/A'}</p>
+            <p><span className="font-semibold" style={{color: colors.textMuted}}>Índice Global de Terrorismo (GTI) Rank:</span> {country.gtiRank ? `${country.gtiRank}/163` : 'N/A'}</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Análisis Integrado de Riesgo</h4>
+        <p className="text-base" style={{color: colors.textMuted}}>{country.analysis}</p>
+      </div>
+    </div>
+  );
+};
+
+// --- COMPONENTES DE CONTENIDO POR PESTAÑA ---
+
+const SearchTab = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setHasSearched(true);
+    if (term.trim() === '') {
+      setSearchResult(null);
+      setHasSearched(false);
+      return;
+    }
+    const result = countriesData.find(country => 
+      country.name.toLowerCase().includes(term.toLowerCase()) || 
+      country.nameEs.toLowerCase().includes(term.toLowerCase())
+    );
+    setSearchResult(result);
+  };
+
+  return (
+    <div>
+      <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Consulta de Jurisdicciones</h2>
+      <p className="mb-6" style={{color: colors.textMuted}}>
+        Ingresa el nombre de un país para ver su estatus consolidado en las principales listas de riesgo.
+      </p>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={handleSearch}
+        placeholder="Ej. Nigeria, Panamá, Irán..."
+        className="w-full p-4 rounded-lg text-lg border-2 transition-all"
+        style={{
+          backgroundColor: colors.card, 
+          color: colors.text, 
+          borderColor: colors.accent2,
+        }}
+      />
+      {hasSearched && <CountryCard country={searchResult} />}
+      {!hasSearched && (
+        <div className={`p-8 rounded-lg mt-6 text-center`} style={{backgroundColor: colors.card, opacity: 0.7}}>
+            <p className="text-lg" style={{color: colors.textMuted}}>Esperando consulta...</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MethodologyTab = () => (
+  <div>
+    <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Metodología del Análisis</h2>
+    <div className="space-y-6" style={{color: colors.textMuted}}>
+      <p>Este panel es el resultado de un análisis integral que consolida y cruza información de múltiples fuentes de reconocido prestigio internacional para ofrecer una visión 360° del riesgo asociado a cada jurisdicción. La metodología se basa en los siguientes pilares:</p>
+      <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>1. Recopilación de Datos (Q3 2025)</h3>
+        <ul className="list-disc list-inside space-y-2">
+          <li><span className="font-semibold">GAFI/FATF:</span> Listas "Negra" (Llamada a la Acción) y "Gris" (Monitoreo Intensificado).</li>
+          <li><span className="font-semibold">Unión Europea:</span> Lista de terceros países de alto riesgo en materia ALD/CFT y Lista de jurisdicciones no cooperativas a efectos fiscales.</li>
+          <li><span className="font-semibold">Transparencia Internacional:</span> Índice de Percepción de la Corrupción (CPI) 2024.</li>
+          <li><span className="font-semibold">Institute for Economics & Peace:</span> Índice Global de Terrorismo (GTI) 2025.</li>
+          <li><span className="font-semibold">Legislación Mexicana:</span> Regímenes Fiscales Preferentes (REFIPRES) según la Ley del Impuesto Sobre la Renta (LISR).</li>
+        </ul>
+      </div>
+      <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>2. Normalización y Ponderación</h3>
+        <p>Cada lista o indicador tiene un peso implícito basado en su severidad. Por ejemplo, estar en la "Lista Negra" del GAFI representa el nivel de riesgo más alto, mientras que un bajo puntaje en el CPI es un factor agravante significativo.</p>
+      </div>
+      <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>3. Análisis Integrado</h3>
+        <p>No se evalúa cada lista de forma aislada. El verdadero valor reside en el análisis cruzado: un país en la lista gris del GAFI, con un bajo puntaje de CPI y presente en la lista de la UE, presenta un perfil de riesgo mucho más elevado que un país que solo figura en una de ellas. Este análisis cualitativo se refleja en la sección "Análisis Integrado de Riesgo" de cada país.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const RiskProfilesTab = () => (
+    <div>
+        <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Perfiles de Riesgo Integrados</h2>
+        <p className="mb-6" style={{color: colors.textMuted}}>Análisis de arquetipos de riesgo basados en la combinación de indicadores para jurisdicciones de interés clave.</p>
+        <div className="space-y-6">
+            <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 1: Riesgo Crítico Sistémico (Ej. Irán, Corea del Norte)</h3>
+                <p style={{color: colors.textMuted}}>Caracterizado por la inclusión en la <span className="font-semibold">Lista Negra del GAFI</span>. Implica un llamado a aplicar contramedidas y debida diligencia reforzada. A menudo se combina con sanciones internacionales, riesgo de financiación de la proliferación y corrupción endémica. Las relaciones comerciales con estas jurisdicciones son de máximo riesgo.</p>
+            </div>
+            <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 2: Riesgo Alto por Deficiencias Múltiples (Ej. Nigeria, Burkina Faso)</h3>
+                <p style={{color: colors.textMuted}}>Jurisdicciones en la <span className="font-semibold">Lista Gris del GAFI</span> y simultáneamente en la <span className="font-semibold">lista de Alto Riesgo de la UE</span>. El perfil se agrava con bajos puntajes en el <span className="font-semibold">CPI</span> y altos rankings en el <span className="font-semibold">GTI</span>. Indica un entorno donde el crimen financiero, la corrupción y el terrorismo están interconectados.</p>
+            </div>
+            <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 3: Riesgo Regulatorio y Fiscal (Ej. Panamá, Rusia)</h3>
+                <p style={{color: colors.textMuted}}>Países que pueden haber progresado en materia ALD/CFT pero que permanecen en <span className="font-semibold">listas negras fiscales (UE)</span>. El riesgo se centra en la falta de transparencia fiscal y la no cooperación en el intercambio de información. En el caso de Rusia, se suman sanciones internacionales y la suspensión del GAFI.</p>
+            </div>
+             <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 4: Riesgo Focalizado (Ej. Mónaco, EAU)</h3>
+                <p style={{color: colors.textMuted}}>Centros financieros sofisticados que entran en <span className="font-semibold">monitoreo del GAFI</span> por deficiencias específicas en la supervisión de sectores de alto riesgo (lujo, bienes raíces, finanzas complejas). El riesgo no es de colapso sistémico, sino de ser instrumentalizados para el lavado de activos de alta gama. Su salida de la lista (como EAU) demuestra capacidad de reforma.</p>
+            </div>
+        </div>
+    </div>
+);
+
+const RecommendationsTab = () => (
+    <div>
+        <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Recomendaciones Estratégicas</h2>
+        <p className="mb-6" style={{color: colors.textMuted}}>Sugerencias para integrar este análisis en una Matriz de Riesgo corporativa y fortalecer el marco de cumplimiento.</p>
+        <div className="space-y-4" style={{color: colors.textMuted}}>
+            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>1. Calibración Dinámica de la Matriz de Riesgo</summary>
+                <p className="mt-2">Utilizar los perfiles de riesgo como un factor multiplicador en la calificación de riesgo del cliente/contraparte. Un cliente en una jurisdicción de "Riesgo Crítico" debe tener una calificación de riesgo inherente de "Alto" automáticamente, antes de considerar otros factores.</p>
+            </details>
+            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>2. Automatización de Alertas y Monitoreo</summary>
+                <p className="mt-2">Integrar esta base de datos con los sistemas de monitoreo transaccional. Cualquier transacción que involucre una jurisdicción de alto perfil (especialmente de las listas negras) debe generar una alerta automática para revisión por parte de un analista de cumplimiento.</p>
+            </details>
+            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>3. Debida Diligencia Reforzada (DDR) Inteligente</summary>
+                <p className="mt-2">El tipo de riesgo debe guiar la DDR. Para un país con <span className="font-semibold">riesgo fiscal</span>, la DDR debe enfocarse en la estructura corporativa y el origen de los fondos. Para un país con <span className="font-semibold">riesgo de terrorismo</span>, el enfoque debe estar en el beneficiario final, las contrapartes y el propósito de la transacción.</p>
+            </details>
+            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>4. Capacitación Continua y Focalizada</summary>
+                <p className="mt-2">Utilizar los "Perfiles de Riesgo" como material de capacitación para el personal de front-office y cumplimiento. Entender los "porqués" detrás de la clasificación de un país mejora la calidad de la detección de operaciones inusuales.</p>
+            </details>
+            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>5. Actualización Periódica del Modelo</summary>
+                <p className="mt-2">Las listas son dinámicas. Establecer un proceso formal de revisión trimestral para actualizar la base de datos de jurisdicciones y recalibrar la matriz de riesgo según las publicaciones del GAFI, la UE y otras fuentes relevantes.</p>
+            </details>
+        </div>
+    </div>
+);
+
+
+// --- COMPONENTE PRINCIPAL DE LA APLICACIÓN ---
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('search');
+
+  const tabs = {
+    search: { label: 'Buscador', component: <SearchTab /> },
+    methodology: { label: 'Metodología', component: <MethodologyTab /> },
+    profiles: { label: 'Perfiles de Riesgo', component: <RiskProfilesTab /> },
+    recommendations: { label: 'Recomendaciones', component: <RecommendationsTab /> },
+  };
+
+  const renderContent = () => {
+    return tabs[activeTab].component;
+  };
+
+  return (
+    <div className="min-h-screen w-full p-4 sm:p-6 md:p-8" style={{ backgroundColor: colors.background, color: colors.text, fontFamily: "'Inter', sans-serif" }}>
+      <header className="text-center mb-8">
+        <h1 className="text-4xl sm:text-5xl font-extrabold" style={{color: colors.text}}>
+          Panel Interactivo de Riesgo de Jurisdicciones
+        </h1>
+        <p className="text-lg mt-2" style={{color: colors.textMuted}}>Análisis consolidado de listas GAFI, UE, Corrupción y más.</p>
+      </header>
+
+      <nav className="flex flex-wrap justify-center items-center mb-8 gap-2 sm:gap-4">
+        {Object.keys(tabs).map(tabKey => (
+          <button
+            key={tabKey}
+            onClick={() => setActiveTab(tabKey)}
+            className={`px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition-all duration-300 border-2 ${
+              activeTab === tabKey
+                ? 'shadow-lg'
+                : 'opacity-70 hover:opacity-100'
+            }`}
+            style={{
+                backgroundColor: activeTab === tabKey ? colors.accent2 : colors.card,
+                borderColor: activeTab === tabKey ? colors.accent2 : 'transparent'
+            }}
+          >
+            {tabs[tabKey].label}
+          </button>
+        ))}
+      </nav>
+
+      <main className="max-w-5xl mx-auto">
+        {renderContent()}
+      </main>
+
+      <footer className="text-center mt-12 pt-6 border-t" style={{borderColor: colors.card}}>
+        <p className="text-sm" style={{color: colors.textMuted}}>
+          Visualización de datos elaborada a partir del "Análisis de Riesgos de Jurisdicciones 2025" elaborado por GMC360.
+        </p>
+      </footer>
+    </div>
+  );
+}
