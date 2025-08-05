@@ -1,460 +1,490 @@
-import React, { useState } from 'react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Interactivo de Riesgo de Jurisdicciones</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel Compiler -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body style="background-color: #393e41;">
+    <div id="root"></div>
 
-// --- DATOS CENTRALIZADOS ---
-// v7: Base de datos globalmente exhaustiva.
-const countriesData = [
-    { name: "Afghanistan", nameEs: "Afganistán", gafi: null, euAml: "Alto Riesgo", cpiScore: 16, gtiRank: 1, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.83, ocIndexCriminality: 8.0, analysis: "Riesgo extremo. Convergen un alto impacto del terrorismo, corrupción endémica, y una de las puntuaciones más altas en criminalidad organizada (tráfico de drogas y armas). El sistema financiero está colapsado y bajo el control de un régimen no reconocido." },
-    { name: "Albania", nameEs: "Albania", gafi: null, euAml: null, cpiScore: 36, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "No figura en listas de vigilancia. Presenta riesgos significativos por la corrupción y el crimen organizado, siendo un país de tránsito para el narcotráfico y la trata de personas en los Balcanes." },
-    { name: "Germany", nameEs: "Alemania", gafi: null, euAml: null, cpiScore: 75, gtiRank: 27, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Economía más grande de Europa con un marco regulatorio robusto. Sin embargo, ha sido criticada por debilidades en la supervisión del sector no financiero y el uso de efectivo, lo que la hace vulnerable al lavado de dinero." },
-    { name: "Saudi Arabia", nameEs: "Arabia Saudita", gafi: null, euAml: null, cpiScore: 52, gtiRank: 75, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Miembro del GAFI con un marco regulatorio en desarrollo. Los riesgos se derivan de su posición como una de las economías más grandes de la región, la financiación del terrorismo y la necesidad de una mayor transparencia en ciertos sectores." },
-    { name: "Algeria", nameEs: "Argelia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 34, gtiRank: 42, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la corrupción, la inestabilidad política y su rol como país de tránsito en el Mediterráneo." },
-    { name: "Angola", nameEs: "Angola", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 32, gtiRank: 51, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se derivan de la corrupción sistémica en la gestión de sus vastos recursos naturales." },
-    { name: "Anguilla", nameEs: "Anguila", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Centro financiero offshore en la lista negra fiscal de la UE por falta de transparencia. Riesgo de uso para la elusión fiscal." },
-    { name: "Antigua and Barbuda", nameEs: "Antigua y Barbuda", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: null, ocIndexCriminality: null, analysis: "Centro offshore en la lista gris fiscal de la UE. Riesgos asociados a la venta de ciudadanía por inversión y servicios financieros internacionales." },
-    { name: "Argentina", nameEs: "Argentina", gafi: null, euAml: null, cpiScore: 37, gtiRank: 76, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.47, ocIndexCriminality: 6.5, analysis: "Miembro del GAFI, no se encuentra en listas de vigilancia. Los riesgos se centran en la inestabilidad económica crónica, una alta percepción de corrupción y mercados criminales significativos, incluyendo el lavado de activos a través del sector inmobiliario y agrícola." },
-    { name: "Armenia", nameEs: "Armenia", gafi: null, euAml: null, cpiScore: 47, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "No figura en listas de vigilancia. Los riesgos se asocian a la corrupción post-soviética y su posición geográfica, que la hace vulnerable como ruta de tránsito para bienes ilícitos entre Asia y Europa." },
-    { name: "Australia", nameEs: "Australia", gafi: null, euAml: null, cpiScore: 75, gtiRank: 90, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Marco regulatorio robusto y alta transparencia. El riesgo no es normativo, sino de exposición: su mercado inmobiliario de alto valor y sus casinos han sido identificados como vulnerables al lavado de dinero transnacional, especialmente de capitales asiáticos." },
-    { name: "Azerbaijan", nameEs: "Azerbaiyán", gafi: null, euAml: null, cpiScore: 25, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Alto riesgo por corrupción y falta de transparencia en la gestión de sus recursos energéticos." },
-    { name: "Bahamas", nameEs: "Bahamas", gafi: null, euAml: null, cpiScore: 64, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Importante centro financiero offshore. Ha realizado reformas significativas en materia de transparencia, saliendo de las listas de riesgo. Sin embargo, el riesgo inherente a los servicios fiduciarios y a la banca privada internacional persiste." },
-    { name: "Bahrain", nameEs: "Baréin", gafi: null, euAml: null, cpiScore: 44, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Centro financiero del Golfo. Los riesgos se asocian a la financiación del terrorismo y la necesidad de una mayor transparencia." },
-    { name: "Bangladesh", nameEs: "Bangladés", gafi: null, euAml: null, cpiScore: 24, gtiRank: 35, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Riesgo muy alto por corrupción, debilidad institucional y vulnerabilidad a la financiación del terrorismo." },
-    { name: "Barbados", nameEs: "Barbados", gafi: null, euAml: null, cpiScore: 69, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Jurisdicción que ha salido recientemente de las listas del GAFI y la UE, demostrando un fuerte compromiso con la reforma. El riesgo residual se asocia a su sector financiero offshore, aunque ahora opera bajo un mayor escrutinio." },
-    { name: "Belarus", nameEs: "Bielorrusia", gafi: null, euAml: null, cpiScore: 39, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgo alto debido a su régimen autoritario, la corrupción y las sanciones internacionales." },
-    { name: "Belgium", nameEs: "Bélgica", gafi: null, euAml: null, cpiScore: 73, gtiRank: 61, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Centro financiero y político de Europa. Los riesgos se centran en la financiación del terrorismo, el lavado de dinero a través del comercio de diamantes y el fraude fiscal." },
-    { name: "Belize", nameEs: "Belice", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Centro offshore en la lista gris fiscal de la UE. Riesgos asociados a la falta de transparencia y el narcotráfico." },
-    { name: "Benin", nameEs: "Benín", gafi: null, euAml: null, cpiScore: 43, gtiRank: 26, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Riesgos de corrupción y ser un punto de tránsito para el tráfico ilícito en África Occidental." },
-    { name: "Bermuda", nameEs: "Bermudas", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: null, ocIndexCriminality: null, analysis: "Uno de los principales centros financieros y de seguros offshore del mundo. El riesgo se centra en su uso para la elusión fiscal por parte de multinacionales." },
-    { name: "Bhutan", nameEs: "Bután", gafi: null, euAml: null, cpiScore: 68, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 4.9, ocIndexCriminality: 5.0, analysis: "País de bajo riesgo con una fuerte reputación de baja corrupción." },
-    { name: "Bolivia", nameEs: "Bolivia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 29, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.98, ocIndexCriminality: 7.0, analysis: "Bajo monitoreo del GAFI. El riesgo se ve agravado por una alta puntuación en crimen organizado (especialmente narcotráfico) y una baja calificación en percepción de corrupción, indicando debilidad institucional." },
-    { name: "Bosnia and Herzegovina", nameEs: "Bosnia y Herzegovina", gafi: null, euAml: null, cpiScore: 35, gtiRank: 65, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Riesgo alto por corrupción endémica, crimen organizado e inestabilidad política." },
-    { name: "Botswana", nameEs: "Botsuana", gafi: null, euAml: null, cpiScore: 59, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Considerado uno de los países menos corruptos de África. Los riesgos se asocian al contrabando de diamantes." },
-    { name: "Brazil", nameEs: "Brasil", gafi: null, euAml: null, cpiScore: 36, gtiRank: 88, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.13, ocIndexCriminality: 7.1, analysis: "Miembro del GAFI, no figura en listas de vigilancia. Sin embargo, su perfil de riesgo es elevado debido a una alta puntuación en el Índice de Crimen Organizado (7.13), especialmente en mercados como el tráfico de cocaína y la tala ilegal, y una persistente y alta percepción de corrupción (CPI: 36). El riesgo principal no es normativo, sino la exposición a flujos financieros ilícitos generados por poderosas facciones criminales." },
-    { name: "Brunei", nameEs: "Brunéi", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "En la lista gris fiscal de la UE. Riesgos asociados a la falta de transparencia en un sultanato rico en petróleo." },
-    { name: "Bulgaria", nameEs: "Bulgaria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 45, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.25, ocIndexCriminality: 6.2, analysis: "Miembro de la UE bajo monitoreo del GAFI. El riesgo principal son las deficiencias ALD/CFT, pero se agrava por un nivel significativo de criminalidad organizada, que ejerce influencia en la economía y el estado." },
-    { name: "Burkina Faso", nameEs: "Burkina Faso", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 41, gtiRank: 2, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.55, ocIndexCriminality: 6.8, analysis: "Riesgo muy alto. Presente en listas ALD/CFT, con un altísimo impacto del terrorismo y un nivel elevado de criminalidad (tráfico de personas, armas y contrabando). La inestabilidad estatal aumenta todos los riesgos." },
-    { name: "Burundi", nameEs: "Burundi", gafi: null, euAml: null, cpiScore: 20, gtiRank: 31, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Riesgo muy alto por corrupción, inestabilidad política y violaciones de derechos humanos." },
-    { name: "Cabo Verde", nameEs: "Cabo Verde", gafi: null, euAml: null, cpiScore: 60, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Considerado un país de bajo riesgo en África, pero su ubicación lo hace vulnerable como punto de tránsito para el narcotráfico." },
-    { name: "Cambodia", nameEs: "Camboya", gafi: null, euAml: null, cpiScore: 22, gtiRank: 86, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Alto riesgo por corrupción, trata de personas, y ser un centro para estafas en línea y lavado de dinero a través de casinos." },
-    { name: "Cameroon", nameEs: "Camerún", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 26, gtiRank: 10, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo muy alto por corrupción, inestabilidad política y terrorismo." },
-    { name: "Canada", nameEs: "Canadá", gafi: null, euAml: null, cpiScore: 76, gtiRank: 68, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Marco regulatorio sólido. Sin embargo, ha sido criticado por vulnerabilidades en el sector inmobiliario ('snow-washing') y la dificultad para identificar a los beneficiarios finales de ciertas estructuras corporativas, lo que lo hace atractivo para el lavado de activos sofisticado." },
-    { name: "Central African Republic", nameEs: "República Centroafricana", gafi: null, euAml: null, cpiScore: 24, gtiRank: 71, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.4, ocIndexCriminality: 7.5, analysis: "Riesgo extremo. Estado fallido con conflicto armado, corrupción y explotación ilícita de recursos naturales." },
-    { name: "Chad", nameEs: "Chad", gafi: null, euAml: null, cpiScore: 19, gtiRank: 23, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Riesgo muy alto por corrupción, inestabilidad y su proximidad a zonas de conflicto." },
-    { name: "Chile", nameEs: "Chile", gafi: null, euAml: null, cpiScore: 66, gtiRank: 57, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.53, ocIndexCriminality: 5.5, analysis: "Considerado uno de los países con menor riesgo de la región. No figura en listas y tiene la mejor puntuación de percepción de corrupción de América Latina. Los riesgos son más bajos, pero existen mercados criminales relacionados con el robo de cobre y el contrabando." },
-    { name: "China", nameEs: "China", gafi: null, euAml: null, cpiScore: 42, gtiRank: 92, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "No está en listas de vigilancia, pero presenta riesgos significativos por la escala de su economía. El lavado de dinero basado en el comercio, la fuga de capitales y la corrupción son desafíos importantes. El control estatal sobre el sistema financiero añade una capa de complejidad al análisis de riesgo." },
-    { name: "Colombia", nameEs: "Colombia", gafi: null, euAml: null, cpiScore: 40, gtiRank: 14, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.75, ocIndexCriminality: 7.7, analysis: "No está en listas ALD/CFT, pero presenta un riesgo muy alto por crimen organizado (narcotráfico, minería ilegal), que es una fuente masiva de activos ilícitos. La corrupción y el terrorismo son factores agravantes persistentes." },
-    { name: "Comoros", nameEs: "Comoras", gafi: null, euAml: null, cpiScore: 19, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Riesgo alto por inestabilidad política y corrupción. Su programa de venta de pasaportes ha sido objeto de controversia." },
-    { name: "Congo", nameEs: "Congo", gafi: null, euAml: null, cpiScore: 21, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgo alto por corrupción en la gestión de sus recursos petroleros." },
-    { name: "Costa Rica", nameEs: "Costa Rica", gafi: null, euAml: null, cpiScore: 55, gtiRank: null, mexTaxHaven: "No", euTax: "Lista Negra Fiscal UE", ocIndexScore: 6.42, ocIndexCriminality: 6.4, analysis: "Presenta un perfil de riesgo dual. Aunque tiene una de las mejores puntuaciones de corrupción de la región, fue incluida en la lista negra fiscal de la UE por no cumplir con los estándares de transparencia. Además, su rol como centro logístico aumenta su vulnerabilidad al narcotráfico." },
-    { name: "Côte d'Ivoire", nameEs: "Costa de Marfil", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 45, gtiRank: 58, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgos de corrupción, inestabilidad política y contrabando de cacao." },
-    { name: "Croatia", nameEs: "Croacia", gafi: null, euAml: null, cpiScore: 50, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.7, ocIndexCriminality: 5.8, analysis: "Miembro de la UE. Los riesgos se asocian a la corrupción y su posición como país de tránsito." },
-    { name: "Cuba", nameEs: "Cuba", gafi: null, euAml: null, cpiScore: 41, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.85, ocIndexCriminality: 6.0, analysis: "No figura en listas ALD/CFT. Sin embargo, está designado como Estado Patrocinador del Terrorismo por EE.UU., lo que conlleva un riesgo de sanciones significativo para transacciones que tocan el sistema financiero estadounidense. La alta percepción de corrupción y la falta de transparencia del estado son factores de riesgo adicionales." },
-    { name: "Cyprus", nameEs: "Chipre", gafi: null, euAml: null, cpiScore: 53, gtiRank: 89, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Centro financiero de la UE que ha enfrentado graves escándalos de lavado de dinero, especialmente de capitales rusos. Su programa de 'pasaportes dorados' fue muy criticado." },
-    { name: "Czech Republic", nameEs: "República Checa", gafi: null, euAml: null, cpiScore: 57, gtiRank: 39, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Miembro de la UE de bajo riesgo. Los riesgos se centran en la corrupción y el fraude fiscal." },
-    { name: "Denmark", nameEs: "Dinamarca", gafi: null, euAml: null, cpiScore: 90, gtiRank: 79, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "Jurisdicción de muy bajo riesgo con una de las puntuaciones de corrupción más bajas del mundo. Sin embargo, su mayor banco estuvo implicado en uno de los mayores escándalos de lavado de dinero de Europa, lo que demuestra que ninguna jurisdicción es inmune al riesgo de exposición." },
-    { name: "Djibouti", nameEs: "Yibuti", gafi: null, euAml: null, cpiScore: 31, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Ubicación estratégica pero con riesgos de corrupción y contrabando." },
-    { name: "Dominica", nameEs: "Dominica", gafi: null, euAml: null, cpiScore: 60, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Centro offshore con riesgos asociados a la venta de ciudadanía por inversión." },
-    { name: "Ecuador", nameEs: "Ecuador", gafi: null, euAml: null, cpiScore: 34, gtiRank: 22, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.07, ocIndexCriminality: 7.2, analysis: "No figura en listas de vigilancia, pero enfrenta una crisis de seguridad con un riesgo extremadamente alto por crimen organizado (narcotráfico, sicariato) y una alta percepción de corrupción. El riesgo operativo y de seguridad es muy elevado." },
-    { name: "Egypt", nameEs: "Egipto", gafi: null, euAml: null, cpiScore: 30, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Riesgos derivados de la corrupción, la falta de transparencia y la financiación del terrorismo." },
-    { name: "El Salvador", nameEs: "El Salvador", gafi: null, euAml: null, cpiScore: 31, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.08, ocIndexCriminality: 7.1, analysis: "El riesgo principal se deriva de un alto nivel de criminalidad histórica (maras) y una baja percepción de la transparencia gubernamental. La adopción de Bitcoin como moneda de curso legal introduce un vector de riesgo de lavado de dinero único y no probado que requiere un escrutinio especial." },
-    { name: "Equatorial Guinea", nameEs: "Guinea Ecuatorial", gafi: null, euAml: null, cpiScore: 13, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Riesgo extremo por corrupción a gran escala y cleptocracia, con una falta total de transparencia en la gestión de los ingresos del petróleo." },
-    { name: "Eritrea", nameEs: "Eritrea", gafi: null, euAml: null, cpiScore: 13, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgo extremo debido a un régimen autoritario y opaco, corrupción sistémica y sanciones internacionales." },
-    { name: "Estonia", nameEs: "Estonia", gafi: null, euAml: null, cpiScore: 76, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.4, ocIndexCriminality: 5.5, analysis: "Miembro de la UE. Su sector bancario ha estado en el centro de grandes escándalos de lavado de dinero, lo que demuestra una alta vulnerabilidad a los flujos ilícitos, especialmente de Rusia." },
-    { name: "Eswatini", nameEs: "Esuatini", gafi: null, euAml: null, cpiScore: 27, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Riesgo alto por falta de democracia, corrupción y debilidad institucional. En la lista gris fiscal de la UE." },
-    { name: "Ethiopia", nameEs: "Etiopía", gafi: null, euAml: null, cpiScore: 37, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Riesgos derivados de la inestabilidad política, el conflicto interno y la corrupción." },
-    { name: "Fiji", nameEs: "Fiyi", gafi: null, euAml: null, cpiScore: 55, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "En la lista negra fiscal de la UE por no cumplir con los estándares de transparencia. Riesgo de uso para la elusión fiscal." },
-    { name: "Finland", nameEs: "Finlandia", gafi: null, euAml: null, cpiScore: 88, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 4.8, ocIndexCriminality: 4.9, analysis: "Jurisdicción de muy bajo riesgo con una transparencia excepcional. Los riesgos son mínimos." },
-    { name: "France", nameEs: "Francia", gafi: null, euAml: null, cpiScore: 67, gtiRank: 40, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Marco regulatorio fuerte. Los riesgos se centran en la financiación del terrorismo, el lavado de dinero a través de bienes de lujo y el sector inmobiliario, y el fraude fiscal." },
-    { name: "Gabon", nameEs: "Gabón", gafi: null, euAml: null, cpiScore: 27, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgo alto por corrupción y falta de transparencia en la gestión de sus abundantes recursos naturales." },
-    { name: "Gambia", nameEs: "Gambia", gafi: null, euAml: null, cpiScore: 38, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Riesgos derivados de la corrupción y su vulnerabilidad como punto de tránsito para el narcotráfico en África Occidental." },
-    { name: "Georgia", nameEs: "Georgia", gafi: null, euAml: null, cpiScore: 53, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Ha realizado importantes reformas anticorrupción. Los riesgos persisten debido a su posición geográfica y la influencia de redes criminales de la región." },
-    { name: "Ghana", nameEs: "Ghana", gafi: null, euAml: null, cpiScore: 42, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Riesgos asociados a la corrupción y el lavado de dinero a través del comercio de oro y el sector inmobiliario." },
-    { name: "Grenada", nameEs: "Granada", gafi: null, euAml: null, cpiScore: 56, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "Centro offshore con riesgos asociados a la venta de ciudadanía por inversión y servicios financieros internacionales." },
-    { name: "Greece", nameEs: "Grecia", gafi: null, euAml: null, cpiScore: 49, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Miembro de la UE. Los riesgos se centran en la corrupción, la evasión fiscal y su posición como puerta de entrada a Europa para el contrabando y la trata de personas." },
-    { name: "Guatemala", nameEs: "Guatemala", gafi: null, euAml: null, cpiScore: 23, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.92, ocIndexCriminality: 7.0, analysis: "Riesgo muy alto debido a la combinación de una de las peores puntuaciones de percepción de corrupción de la región y un alto índice de criminalidad organizada. La debilidad institucional y la captura del estado por redes ilícitas son los principales factores de riesgo." },
-    { name: "Guinea", nameEs: "Guinea", gafi: null, euAml: null, cpiScore: 28, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Riesgo muy alto por corrupción, inestabilidad política y el comercio ilícito de recursos naturales, especialmente bauxita." },
-    { name: "Equatorial Guinea", nameEs: "Guinea Ecuatorial", gafi: null, euAml: null, cpiScore: 13, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Riesgo extremo por corrupción a gran escala y cleptocracia, con una falta total de transparencia en la gestión de los ingresos del petróleo." },
-    { name: "Guinea-Bissau", nameEs: "Guinea-Bisáu", gafi: null, euAml: null, cpiScore: 21, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.2, ocIndexCriminality: 7.3, analysis: "Considerado un narcoestado. Riesgo extremo por la penetración del narcotráfico en las estructuras estatales y la corrupción endémica." },
-    { name: "Guyana", nameEs: "Guyana", gafi: null, euAml: null, cpiScore: 39, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Economía en rápido crecimiento debido al petróleo. Los riesgos se derivan de la corrupción y la falta de capacidad institucional para gestionar la nueva riqueza, lo que la hace vulnerable al lavado de dinero." },
-    { name: "Haiti", nameEs: "Haití", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 16, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.1, ocIndexCriminality: 7.2, analysis: "Riesgo extremo. En la lista gris del GAFI y en la lista de la UE. Estado fallido con colapso institucional, corrupción endémica y violencia de pandillas." },
-    { name: "Honduras", nameEs: "Honduras", gafi: null, euAml: null, cpiScore: 22, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.37, ocIndexCriminality: 7.4, analysis: "Perfil de riesgo extremo. Combina una percepción de corrupción sistémica con un índice de criminalidad muy alto, siendo un corredor clave para el narcotráfico. La debilidad del estado de derecho y la violencia son factores críticos." },
-    { name: "Hong Kong", nameEs: "Hong Kong", gafi: null, euAml: null, cpiScore: 74, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Centro financiero global con un marco regulatorio robusto. El riesgo se deriva de su exposición al lavado de dinero transfronterizo, especialmente relacionado con China continental. Es considerado un REFIPRES por México debido a su sistema fiscal territorial." },
-    { name: "Hungary", nameEs: "Hungría", gafi: null, euAml: null, cpiScore: 41, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Miembro de la UE. Los riesgos se centran en la corrupción de alto nivel y el debilitamiento del estado de derecho." },
-    { name: "Iceland", nameEs: "Islandia", gafi: null, euAml: null, cpiScore: 77, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 4.5, ocIndexCriminality: 4.6, analysis: "País de muy bajo riesgo en la mayoría de los indicadores, con alta transparencia y bajo crimen organizado. Sin embargo, su tasa impositiva corporativa lo califica como un potencial REFIPRES bajo la ley mexicana, lo que requiere un análisis fiscal específico." },
-    { name: "India", nameEs: "India", gafi: null, euAml: null, cpiScore: 38, gtiRank: 14, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Economía masiva y compleja con un gran sector informal. Los riesgos se derivan de la corrupción, el lavado de dinero a través de métodos informales (hawala), el comercio de oro y el sector inmobiliario. La financiación del terrorismo también es una preocupación clave." },
-    { name: "Indonesia", nameEs: "Indonesia", gafi: null, euAml: null, cpiScore: 37, gtiRank: 30, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Economía emergente grande con riesgos significativos de corrupción, crimen organizado (tala ilegal, piratería) y un historial de financiación del terrorismo. No figura en listas de vigilancia, pero la debilidad institucional exige una debida diligencia reforzada." },
-    { name: "Iraq", nameEs: "Irak", gafi: null, euAml: null, cpiScore: 26, gtiRank: 13, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 7.2, ocIndexCriminality: 7.3, analysis: "Jurisdicción de riesgo extremo debido a la inestabilidad política, la corrupción endémica, un alto impacto del terrorismo y un elevado nivel de criminalidad organizada. El entorno operativo es altamente volátil y peligroso." },
-    { name: "Iran", nameEs: "Irán", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 23, gtiRank: 18, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.15, ocIndexCriminality: 7.0, analysis: "Riesgo crítico. En la lista negra del GAFI y sujeto a sanciones. El estado mismo está implicado en mercados criminales y financiación del terrorismo, lo que representa un riesgo sistémico para el sistema financiero internacional." },
-    { name: "Ireland", nameEs: "Irlanda", gafi: null, euAml: null, cpiScore: 77, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.3, ocIndexCriminality: 5.4, analysis: "Centro financiero internacional. El riesgo principal se asocia a la planificación fiscal agresiva por parte de multinacionales y el uso de estructuras corporativas complejas." },
-    { name: "Solomon Islands", nameEs: "Islas Salomón", gafi: null, euAml: null, cpiScore: 43, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Riesgo derivado de la debilidad institucional, la corrupción y la tala ilegal. La inestabilidad política es un factor de riesgo adicional." },
-    { name: "British Virgin Islands", nameEs: "Islas Vírgenes Británicas", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: null, ocIndexCriminality: null, analysis: "Jurisdicción de riesgo dual. Se encuentra bajo monitoreo del GAFI por deficiencias en la supervisión de su gran sector de servicios corporativos y fiduciarios. Simultáneamente, está en la lista gris fiscal de la UE. El riesgo principal es su uso para crear estructuras corporativas opacas." },
-    { name: "US Virgin Islands", nameEs: "Islas Vírgenes de EE. UU.", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Territorio de EE.UU. que figura en la lista negra fiscal de la UE por no cumplir con los estándares de transparencia e intercambio de información. El riesgo se centra en su potencial uso para la elusión fiscal." },
-    { name: "Israel", nameEs: "Israel", gafi: null, euAml: null, cpiScore: 64, gtiRank: 8, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Marco regulatorio robusto. Los riesgos se centran en la financiación del terrorismo y el lavado de dinero a través del sector de diamantes y alta tecnología." },
-    { name: "Italy", nameEs: "Italia", gafi: null, euAml: null, cpiScore: 54, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Miembro del G7. Enfrenta riesgos significativos por la infiltración de la mafia en la economía, la corrupción y el fraude fiscal." },
-    { name: "Jamaica", nameEs: "Jamaica", gafi: null, euAml: null, cpiScore: 44, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.95, ocIndexCriminality: 7.0, analysis: "Tras haber estado en la lista gris del GAFI, ha demostrado progreso en su marco normativo. Sin embargo, el riesgo real sigue siendo muy alto debido a un índice de criminalidad elevado por la violencia de las pandillas, el tráfico de drogas y las estafas de lotería ('lottery scamming')." },
-    { name: "Japan", nameEs: "Japón", gafi: null, euAml: null, cpiScore: 71, gtiRank: 72, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Marco regulatorio fuerte, pero el GAFI ha señalado debilidades en la supervisión de ciertos sectors y en la aplicación de la debida diligencia del cliente. El riesgo principal se asocia a los grupos criminales organizados (Yakuza) y al lavado de dinero a través de empresas fachada." },
-    { name: "Jordan", nameEs: "Jordania", gafi: null, euAml: null, cpiScore: 49, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Estable en una región volátil. Los riesgos se derivan de la financiación del terrorismo y los flujos de refugiados." },
-    { name: "Kazakhstan", nameEs: "Kazajistán", gafi: null, euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Riesgos asociados a la corrupción y la falta de transparencia en su vasto sector de recursos naturales." },
-    { name: "Kenya", nameEs: "Kenia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 32, gtiRank: 19, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la corrupción, el lavado de dinero a través de servicios de dinero móvil y su vulnerabilidad al terrorismo." },
-    { name: "Kyrgyzstan", nameEs: "Kirguistán", gafi: null, euAml: null, cpiScore: 25, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Alto riesgo por corrupción y crimen organizado, siendo un país de tránsito en las rutas de narcotráfico de Asia Central." },
-    { name: "Kosovo", nameEs: "Kosovo", gafi: null, euAml: null, cpiScore: 44, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgos derivados de la corrupción, el crimen organizado y la inestabilidad política en los Balcanes." },
-    { name: "Kuwait", nameEs: "Kuwait", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Centro financiero del Golfo. Los riesgos se asocian a la financiación del terrorismo y la necesidad de una mayor transparencia." },
-    { name: "Laos", nameEs: "Laos", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 33, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se derivan de la corrupción, el tráfico de drogas y la tala ilegal." },
-    { name: "Latvia", nameEs: "Letonia", gafi: null, euAml: null, cpiScore: 59, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Miembro de la UE. Ha enfrentado escándalos de lavado de dinero en su sector bancario, lo que indica un riesgo de exposición a flujos financieros ilícitos del espacio post-soviético." },
-    { name: "Lesotho", nameEs: "Lesoto", gafi: null, euAml: null, cpiScore: 37, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "Riesgos asociados a la corrupción y la debilidad institucional." },
-    { name: "Lebanon", nameEs: "Líbano", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 22, gtiRank: 64, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo extremo por crisis económica, colapso institucional, corrupción endémica y la influencia de Hezbollah, una organización designada como terrorista." },
-    { name: "Libya", nameEs: "Libia", gafi: null, euAml: null, cpiScore: 13, gtiRank: 53, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.5, ocIndexCriminality: 7.6, analysis: "Riesgo extremo. Estado fallido con conflicto armado, corrupción endémica, tráfico de personas y armas. El sistema financiero es disfuncional." },
-    { name: "Lithuania", nameEs: "Lituania", gafi: null, euAml: null, cpiScore: 63, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.6, ocIndexCriminality: 5.7, analysis: "Miembro de la UE. Su sector financiero es vulnerable a los flujos ilícitos del espacio post-soviético." },
-    { name: "Luxembourg", nameEs: "Luxemburgo", gafi: null, euAml: null, cpiScore: 78, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 4.85, ocIndexCriminality: 4.8, analysis: "Centro financiero de primer nivel con un marco regulatorio sofisticado y alta calificación en transparencia. No figura en ninguna lista de riesgo. El principal riesgo es inherente a su gran sector financiero, que puede ser atractivo para el lavado de activos de alta gama y la planificación fiscal agresiva, requiriendo una supervisión constante." },
-    { name: "North Macedonia", nameEs: "Macedonia del Norte", gafi: null, euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Riesgos relacionados con la corrupción, el crimen organizado y su posición como país de tránsito en los Balcanes." },
-    { name: "Madagascar", nameEs: "Madagascar", gafi: null, euAml: null, cpiScore: 26, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Alto riesgo por corrupción, debilidad institucional y el comercio ilícito de recursos naturales y vida silvestre." },
-    { name: "Malawi", nameEs: "Malaui", gafi: null, euAml: null, cpiScore: 34, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Riesgos asociados a la corrupción y el contrabando de vida silvestre." },
-    { name: "Malaysia", nameEs: "Malasia", gafi: null, euAml: null, cpiScore: 50, gtiRank: 52, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Centro financiero del Sudeste Asiático. Ha estado implicado en grandes escándalos de corrupción (1MDB). Los riesgos persisten en la corrupción de alto nivel y el lavado de dinero." },
-    { name: "Maldives", nameEs: "Maldivas", gafi: null, euAml: null, cpiScore: 38, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Riesgos de corrupción y lavado de dinero a través de su lujoso sector turístico." },
-    { name: "Mali", nameEs: "Malí", gafi: null, euAml: "Alto Riesgo", cpiScore: 27, gtiRank: 4, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.3, ocIndexCriminality: 7.4, analysis: "Riesgo extremo. En la lista de la UE, con un alto impacto del terrorismo y el crimen organizado. La inestabilidad política y el conflicto armado lo convierten en una jurisdicción de máxima alerta." },
-    { name: "Malta", nameEs: "Malta", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Miembro de la UE que ha estado bajo intenso escrutinio por debilidades en su marco ALD/CFT, corrupción y la venta de ciudadanía. Aunque salió de la lista gris del GAFI, los riesgos reputacionales persisten." },
-    { name: "Morocco", nameEs: "Marruecos", gafi: null, euAml: null, cpiScore: 37, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgos de corrupción y ser un importante productor y exportador de cannabis. Ha mejorado su marco ALD/CFT para salir de la lista gris del GAFI." },
-    { name: "Mauritania", nameEs: "Mauritania", gafi: null, euAml: null, cpiScore: 30, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Riesgos de corrupción, tráfico de personas y vulnerabilidad a la financiación del terrorismo en la región del Sahel." },
-    { name: "Mauritius", nameEs: "Mauricio", gafi: null, euAml: null, cpiScore: 51, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.3, ocIndexCriminality: 5.4, analysis: "Centro financiero offshore que ha fortalecido su marco regulatorio para salir de las listas de riesgo. Persiste el riesgo inherente a la gestión de activos internacionales." },
-    { name: "Mexico", nameEs: "México", gafi: null, euAml: null, cpiScore: 31, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.57, ocIndexCriminality: 7.6, analysis: "No figura en listas ALD/CFT, pero sufre de un riesgo extremadamente alto por crimen organizado, con los cárteles más sofisticados del mundo. Esto, combinado con una alta percepción de corrupción, genera un entorno de alto riesgo para el lavado de dinero." },
-    { name: "Moldova", nameEs: "Moldavia", gafi: null, euAml: null, cpiScore: 43, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Riesgos de corrupción, crimen organizado y la influencia de redes criminales transnacionales." },
-    { name: "Monaco", nameEs: "Mónaco", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en el lavado de dinero a través de su sector de lujo, inmobiliario y financiero." },
-    { name: "Mongolia", nameEs: "Mongolia", gafi: null, euAml: null, cpiScore: 33, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgos de corrupción en su sector minero y debilidad en la supervisión financiera." },
-    { name: "Montenegro", nameEs: "Montenegro", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Riesgos de corrupción y crimen organizado, siendo un punto de tránsito en los Balcanes." },
-    { name: "Mozambique", nameEs: "Mozambique", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 25, gtiRank: 17, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo muy alto por terrorismo, corrupción y crimen organizado (tráfico de heroína y vida silvestre)." },
-    { name: "Myanmar", nameEs: "Myanmar", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 20, gtiRank: 9, mexTaxHaven: "No", euTax: null, ocIndexScore: 8.15, ocIndexCriminality: 8.3, analysis: "Riesgo crítico. En la lista negra del GAFI y con la puntuación más alta de criminalidad del mundo (producción de drogas sintéticas, trata de personas). La inestabilidad política y el conflicto armado agravan la situación." },
-    { name: "Namibia", nameEs: "Namibia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 49, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la corrupción y el contrabando de diamantes y vida silvestre." },
-    { name: "Nepal", nameEs: "Nepal", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 34, gtiRank: 68, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgos de corrupción y lavado de dinero a través de redes de remesas informales (hundi)." },
-    { name: "Nicaragua", nameEs: "Nicaragua", gafi: null, euAml: null, cpiScore: 17, gtiRank: 93, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.35, ocIndexCriminality: 6.5, analysis: "Aunque no está en listas ALD/CFT, presenta un riesgo muy alto por factores de gobernanza. Su puntuación de corrupción es de las peores del mundo (CPI: 17), indicando una captura casi total del estado. El riesgo se centra en la falta de transparencia, la debilidad institucional y el potencial uso del sistema para fines de corrupción política." },
-    { name: "Niger", nameEs: "Níger", gafi: null, euAml: null, cpiScore: 34, gtiRank: 5, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "Riesgo extremo debido a su posición en el epicentro de la crisis terrorista del Sahel. La inestabilidad política, la corrupción y las rutas de tráfico ilícito agravan la situación." },
-    { name: "Nigeria", nameEs: "Nigeria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 24, gtiRank: 8, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.28, ocIndexCriminality: 7.2, analysis: "Riesgo muy alto. La inclusión en listas ALD/CFT se combina con una alta corrupción, un impacto significativo del terrorismo y redes criminales muy desarrolladas (ciberdelincuencia, secuestro, piratería)." },
-    { name: "North Korea", nameEs: "Corea del Norte", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 17, gtiRank: 48, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.10, ocIndexCriminality: 7.5, analysis: "Riesgo extremo. En la lista negra del GAFI por financiación de la proliferación. El propio estado opera como una empresa criminal, utilizando ciberataques, contrabando y falsificación para financiar su régimen." },
-    { name: "Norway", nameEs: "Noruega", gafi: null, euAml: null, cpiScore: 81, gtiRank: 66, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Jurisdicción de muy bajo riesgo con una fuerte estado de derecho y alta transparencia. Los riesgos son mínimos y están relacionados con la sofisticación de su sector financiero." },
-    { name: "New Zealand", nameEs: "Nueva Zelanda", gafi: null, euAml: null, cpiScore: 83, gtiRank: 94, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Una de las jurisdicciones de menor riesgo del mundo, con una transparencia y un estado de derecho excepcionales. Los riesgos son mínimos." },
-    { name: "Oman", nameEs: "Omán", gafi: null, euAml: null, cpiScore: 55, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "País de bajo riesgo en general, pero su posición en una región volátil y su estatus como centro financiero crean riesgos de exposición. Considerado REFIPRES por México." },
-    { name: "Netherlands", nameEs: "Países Bajos", gafi: null, euAml: null, cpiScore: 78, gtiRank: 60, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Importante centro financiero con un marco regulatorio robusto. Sin embargo, su gran sector financiero y su papel en el comercio internacional lo convierten en un destino principal para el lavado de dinero sofisticado." },
-    { name: "Pakistan", nameEs: "Pakistán", gafi: null, euAml: null, cpiScore: 27, gtiRank: 2, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "Riesgo muy alto por financiación del terrorismo, corrupción y una gran economía informal. Aunque fue retirado de la lista gris del GAFI, los riesgos subyacentes siguen siendo significativos." },
-    { name: "Palau", nameEs: "Palaos", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Jurisdicción de alto riesgo fiscal, incluida en la lista negra de la UE por no cumplir con los estándares de transparencia." },
-    { name: "Panama", nameEs: "Panamá", gafi: null, euAml: null, cpiScore: 35, gtiRank: null, mexTaxHaven: "No", euTax: "Lista Negra Fiscal UE", ocIndexScore: 6.43, ocIndexCriminality: 6.5, analysis: "Riesgo dual: fiscal y criminal. Aunque ha salido de la lista gris del GAFI, permanece en la lista negra fiscal de la UE. Su posición como hub logístico lo hace vulnerable al crimen organizado transnacional (tráfico de drogas)." },
-    { name: "Papua New Guinea", nameEs: "Papúa Nueva Guinea", gafi: null, euAml: null, cpiScore: 29, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Riesgo muy alto debido a la corrupción endémica, la debilidad institucional y la explotación ilegal de sus vastos recursos naturales (tala, minería)." },
-    { name: "Paraguay", nameEs: "Paraguay", gafi: null, euAml: null, cpiScore: 28, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.43, ocIndexCriminality: 7.5, analysis: "Presenta un riesgo muy alto. Aunque no está en listas de vigilancia, combina una muy baja puntuación de corrupción con uno de los índices de criminalidad organizada más altos de la región, siendo un centro neurálgico para el contrabando y el lavado de dinero." },
-    { name: "Peru", nameEs: "Perú", gafi: null, euAml: null, cpiScore: 33, gtiRank: 48, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.62, ocIndexCriminality: 6.7, analysis: "El riesgo se deriva de la inestabilidad política crónica, una alta percepción de corrupción y la presencia de mercados criminales significativos como la minería ilegal y el narcotráfico. No figura en listas de vigilancia." },
-    { name: "Poland", nameEs: "Polonia", gafi: null, euAml: null, cpiScore: 53, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.7, ocIndexCriminality: 5.8, analysis: "Miembro de la UE. Los riesgos se centran en el fraude del IVA intracomunitario, la corrupción y su posición como país de tránsito para bienes ilícitos." },
-    { name: "Portugal", nameEs: "Portugal", gafi: null, euAml: null, cpiScore: 57, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Miembro de la UE de bajo riesgo. Los riesgos se asocian a la corrupción y al lavado de dinero a través del sector inmobiliario, así como su posición geográfica como punto de entrada de drogas a Europa." },
-    { name: "United Kingdom", nameEs: "Reino Unido", gafi: null, euAml: null, cpiScore: 71, gtiRank: 41, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.45, ocIndexCriminality: 6.5, analysis: "Posee uno de los regímenes ALD/CFT más sofisticados y no figura en listas de riesgo. Sin embargo, Londres es un centro global para el lavado de activos, particularmente de origen ruso y de otras jurisdicciones de alto riesgo. El riesgo no es de debilidad regulatoria, sino de la exposición a flujos financieros ilícitos complejos y de gran escala." },
-    { name: "Dominican Republic", nameEs: "República Dominicana", gafi: null, euAml: null, cpiScore: 36, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.75, ocIndexCriminality: 6.8, analysis: "No se encuentra en listas de vigilancia. El principal factor de riesgo es su alta puntuación en el Índice de Crimen Organizado, derivado de su rol como un importante punto de transbordo de drogas hacia EE.UU. y Europa. La corrupción y la debilidad institucional son riesgos complementarios importantes." },
-    { name: "Romania", nameEs: "Rumania", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Miembro de la UE. Los riesgos se centran en la corrupción y el crimen organizado, particularmente el tráfico de personas y el fraude fiscal." },
-    { name: "Russia", nameEs: "Rusia", gafi: "Suspendido", euAml: null, cpiScore: 22, gtiRank: 16, mexTaxHaven: "Sí (REFIPRES)", euTax: "Lista Negra Fiscal UE", ocIndexScore: 6.31, ocIndexCriminality: 6.2, analysis: "Riesgo complejo. Suspensión del GAFI, en lista negra fiscal de la UE y alta corrupción. Las mafias rusas son actores globales y el estado utiliza actores criminales para sus objetivos, creando un entorno de alto riesgo." },
-    { name: "Rwanda", nameEs: "Ruanda", gafi: null, euAml: null, cpiScore: 57, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Considerado un país con baja corrupción para los estándares africanos. Sin embargo, los riesgos se derivan de la inestabilidad en la región de los Grandes Lagos y su potencial como ruta de tránsito para minerales de conflicto." },
-    { name: "Samoa", nameEs: "Samoa", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Jurisdicción de alto riesgo fiscal, incluida en la lista negra de la UE por no cumplir con los estándares de transparencia. El riesgo se centra en su uso para la elusión fiscal." },
-    { name: "Saint Vincent and the Grenadines", nameEs: "San Vicente y las Granadinas", gafi: null, euAml: null, cpiScore: 63, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.4, ocIndexCriminality: 5.5, analysis: "Jurisdicción offshore con riesgos similares a sus vecinos del Caribe, relacionados con la banca internacional y la falta de transparencia en ciertas estructuras corporativas." },
-    { name: "Saint Lucia", nameEs: "Santa Lucía", gafi: null, euAml: null, cpiScore: 59, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Centro financiero offshore. El riesgo se asocia a su sector de servicios internacionales y a la venta de ciudadanía por inversión, que puede ser explotado para el lavado de dinero." },
-    { name: "Sao Tome and Principe", nameEs: "Santo Tomé y Príncipe", gafi: null, euAml: null, cpiScore: 45, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "No figura en listas de vigilancia. Los riesgos se asocian a la corrupción y la debilidad institucional en una pequeña economía insular." },
-    { name: "Senegal", nameEs: "Senegal", gafi: null, euAml: null, cpiScore: 45, gtiRank: 54, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "No está en listas de vigilancia. Los riesgos se centran en la corrupción y su vulnerabilidad al tráfico de drogas y la inestabilidad regional del Sahel." },
-    { name: "Serbia", nameEs: "Serbia", gafi: null, euAml: null, cpiScore: 35, gtiRank: 82, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "No figura en listas de vigilancia. Presenta riesgos significativos por la corrupción y el crimen organizado, siendo un país de tránsito en los Balcanes para diversas actividades ilícitas." },
-    { name: "Seychelles", nameEs: "Seychelles", gafi: null, euAml: null, cpiScore: 72, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 5.4, ocIndexCriminality: 5.5, analysis: "Centro financiero offshore que ha mejorado su marco regulatorio. Sin embargo, permanece en la lista gris fiscal de la UE, y el riesgo inherente a su sector de servicios corporativos exige una diligencia continua." },
-    { name: "Sierra Leone", nameEs: "Sierra Leona", gafi: null, euAml: null, cpiScore: 33, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Riesgo muy alto por corrupción endémica, debilidad institucional y el comercio ilícito de recursos naturales, especialmente diamantes." },
-    { name: "Singapore", nameEs: "Singapur", gafi: null, euAml: null, cpiScore: 84, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Centro financiero líder con un marco regulatorio muy estricto y baja corrupción. El riesgo es de exposición, al ser un imán para la riqueza global, lo que lo hace vulnerable al lavado de dinero sofisticado y a la gestión de activos de personas políticamente expuestas (PEPs) de alto riesgo." },
-    { name: "Somalia", nameEs: "Somalia", gafi: null, euAml: null, cpiScore: 9, gtiRank: 7, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.6, ocIndexCriminality: 7.7, analysis: "Riesgo extremo. Considerado un estado fallido, con la peor puntuación de corrupción del mundo, el mayor impacto del terrorismo (Al-Shabaab) y un alto nivel de piratería y crimen organizado. El sistema financiero formal es prácticamente inexistente." },
-    { name: "Sri Lanka", nameEs: "Sri Lanka", gafi: null, euAml: null, cpiScore: 32, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Los riesgos se derivan de la inestabilidad política, la corrupción y un historial de financiación del terrorismo. Aunque no está en listas, la debilidad institucional requiere un escrutinio adicional." },
-    { name: "South Africa", nameEs: "Sudáfrica", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 41, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la sofisticación de los delitos financieros, la corrupción a gran escala ('state capture') y la violencia del crimen organizado." },
-    { name: "Sudan", nameEs: "Sudán", gafi: null, euAml: null, cpiScore: 15, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.1, ocIndexCriminality: 7.2, analysis: "Riesgo extremo debido al conflicto civil en curso, el colapso del estado, la corrupción endémica y un historial de sanciones. El entorno operativo es de máxima alerta." },
-    { name: "South Sudan", nameEs: "Sudán del Sur", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 8, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.3, ocIndexCriminality: 7.4, analysis: "Riesgo extremo. En la lista gris del GAFI y en la lista de la UE, con una de las peores puntuaciones de corrupción del mundo. El conflicto y la debilidad institucional hacen que el riesgo de desvío de fondos y corrupción sea máximo." },
-    { name: "Sweden", nameEs: "Suecia", gafi: null, euAml: null, cpiScore: 80, gtiRank: 50, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "País de bajo riesgo con un marco regulatorio robusto. Sin embargo, su sector bancario ha estado expuesto a escándalos de lavado de dinero a gran escala en la región del Báltico, lo que indica que el riesgo de exposición a flujos ilícitos complejos es real." },
-    { name: "Switzerland", nameEs: "Suiza", gafi: null, euAml: null, cpiScore: 81, gtiRank: 62, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Principal centro mundial de gestión de patrimonios. El riesgo no proviene de un marco normativo débil, sino de la naturaleza de su industria, que gestiona enormes volúmenes de activos transfronterizos. El secreto bancario, aunque reducido, sigue siendo un factor cultural que exige una diligencia reforzada." },
-    { name: "Suriname", nameEs: "Surinam", gafi: null, euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "No figura en listas de vigilancia, pero presenta un riesgo muy alto por ser un centro para el narcotráfico y la minería ilegal de oro. La corrupción y la debilidad de las instituciones son factores de riesgo significativos." },
-    { name: "Syria", nameEs: "Siria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 12, gtiRank: 3, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.8, ocIndexCriminality: 7.9, analysis: "Riesgo extremo. En la lista gris del GAFI (con un estatus casi de lista negra por su antigüedad), en la lista de la UE, patrocinador del terrorismo para EE.UU., y sujeto a sanciones integrales. El conflicto armado y el colapso del estado lo hacen una jurisdicción prohibitiva." },
-    { name: "Taiwan", nameEs: "Taiwán", gafi: null, euAml: null, cpiScore: 67, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.7, ocIndexCriminality: 5.8, analysis: "Jurisdicción de bajo riesgo con un estado de derecho sólido. El principal riesgo se deriva del lavado de dinero basado en el comercio con China continental. Es considerado REFIPRES por México." },
-    { name: "Thailand", nameEs: "Tailandia", gafi: null, euAml: null, cpiScore: 34, gtiRank: 28, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "No está en listas ALD/CFT. Los riesgos se derivan de la corrupción, el lavado de dinero a través del sector turístico y de bienes de lujo, y su rol en el tráfico de personas y drogas en el Sudeste Asiático." },
-    { name: "Tanzania", nameEs: "Tanzania", gafi: null, euAml: "Alto Riesgo", cpiScore: 41, gtiRank: 55, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Aunque fue retirado de la lista gris del GAFI, permanece en la lista de alto riesgo de la UE. Los riesgos se centran en la corrupción y el contrabando de vida silvestre." },
-    { name: "Tajikistan", nameEs: "Tayikistán", gafi: null, euAml: null, cpiScore: 19, gtiRank: 70, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Jurisdicción de muy alto riesgo por su bajísima puntuación en el IPC y su rol como corredor principal para el narcotráfico desde Afganistán. La debilidad institucional es extrema." },
-    { name: "Togo", nameEs: "Togo", gafi: null, euAml: null, cpiScore: 32, gtiRank: 24, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "No figura en listas de vigilancia. Los riesgos se centran en la corrupción y su uso como centro de tránsito para el tráfico ilícito, incluyendo drogas y productos falsificados. La debilidad institucional es un factor clave." },
-    { name: "Trinidad and Tobago", nameEs: "Trinidad y Tobago", gafi: null, euAml: "Alto Riesgo", cpiScore: 41, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Perfil de riesgo compuesto muy alto. Figura en la lista de alto riesgo ALD de la UE y en la lista negra fiscal de la UE. Su ubicación geográfica lo convierte en un punto clave para el narcotráfico, lo que se suma a los riesgos de corrupción y violencia." },
-    { name: "Turkey", nameEs: "Turquía", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 34, gtiRank: 32, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 6.83, ocIndexCriminality: 6.9, analysis: "Jurisdicción de alto riesgo. Bajo monitoreo del GAFI y con un alto nivel de criminalidad organizada debido a su posición geográfica. Es un centro para el tráfico de drogas, personas y bienes ilícitos entre Asia y Europa." },
-    { name: "Turkmenistan", nameEs: "Turkmenistán", gafi: null, euAml: null, cpiScore: 17, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgo extremo debido a la corrupción sistémica y la opacidad total de un régimen autoritario. La falta de transparencia financiera es casi absoluta." },
-    { name: "Uganda", nameEs: "Uganda", gafi: null, euAml: null, cpiScore: 26, gtiRank: 33, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Aunque salió de la lista gris del GAFI, los riesgos persisten debido a la alta corrupción, la inestabilidad regional y el comercio ilícito de recursos naturales." },
-    { name: "Ukraine", nameEs: "Ucrania", gafi: null, euAml: null, cpiScore: 35, gtiRank: 45, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "No figura en listas de vigilancia, pero el conflicto armado en curso crea un entorno de riesgo extremo. Los riesgos incluyen la corrupción, el desvío de ayuda internacional, el tráfico de armas y la desestabilización del sistema financiero. Se requiere máxima precaución." },
-    { name: "United Arab Emirates", nameEs: "Emiratos Árabes Unidos", gafi: null, euAml: null, cpiScore: 68, gtiRank: 67, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.63, ocIndexCriminality: 7.0, analysis: "Centro financiero global que ha salido de la lista gris. Persiste un riesgo por ser un destino para actores criminales de todo el mundo y un centro para el lavado de activos de alto nivel, especialmente oro y bienes de lujo." },
-    { name: "Uruguay", nameEs: "Uruguay", gafi: null, euAml: null, cpiScore: 76, gtiRank: 98, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.27, ocIndexCriminality: 5.2, analysis: "Considerado el país de menor riesgo de América Latina. Tiene la mejor puntuación de percepción de corrupción y un bajo índice de criminalidad en comparación regional. No figura en ninguna lista de vigilancia." },
-    { name: "Uzbekistan", nameEs: "Uzbekistán", gafi: null, euAml: null, cpiScore: 32, gtiRank: 90, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "No está en listas de vigilancia. Los riesgos se derivan de una alta percepción de corrupción y de ser un país de tránsito en las rutas de narcotráfico de Asia Central. Las reformas económicas en curso pueden presentar nuevas vulnerabilidades al lavado de dinero." },
-    { name: "Venezuela", nameEs: "Venezuela", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 10, gtiRank: 81, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.85, ocIndexCriminality: 6.9, analysis: "Riesgo extremo. Bajo monitoreo del GAFI, con una de las peores puntuaciones de corrupción del mundo. La crisis humanitaria y el colapso del estado de derecho crean un entorno de máxima alerta para cualquier operación." },
-    { name: "Vietnam", nameEs: "Vietnam", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 40, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Bajo escrutinio en múltiples frentes: lista gris del GAFI, alto riesgo para la UE y lista gris fiscal de la UE. El riesgo es compuesto, abarcando deficiencias en ALD/CFT, corrupción y falta de transparencia fiscal." },
-    { name: "Yemen", nameEs: "Yemen", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 13, gtiRank: 22, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "Riesgo extremo debido al conflicto armado, colapso institucional, corrupción y presencia en listas ALD/CFT." },
-    { name: "Zambia", nameEs: "Zambia", gafi: null, euAml: null, cpiScore: 39, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "No figura en listas de vigilancia. Los riesgos se asocian a la corrupción y a su vulnerabilidad como país de tránsito para el contrabando de minerales y vida silvestre. La efectividad de su marco ALD/CFT es un área de monitoreo." },
-    { name: "Zimbabwe", nameEs: "Zimbabue", gafi: null, euAml: null, cpiScore: 21, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Aunque fue retirado de la lista gris del GAFI, Zimbabue presenta un riesgo muy alto debido a la corrupción endémica, la inestabilidad económica y el comercio ilícito de minerales, especialmente oro. La falta de transparencia gubernamental es un factor crítico." }
-].sort((a, b) => a.nameEs.localeCompare(b.nameEs));
-
-
-// --- COMPONENTES DE LA UI ---
-
-const colors = {
-  background: '#393e41',
-  card: '#1b1b1e',
-  text: '#f6fff8',
-  accent1: '#ff8361', // Naranja
-  accent2: '#a663cc', // Morado
-  accent3: '#87d895', // Verde
-  textMuted: '#a0aec0',
-};
-
-const RiskIndicator = ({ text }) => {
-  const levelStyles = {
-    'Crítico': `bg-red-700 border-red-500`,
-    'Alto': `bg-yellow-600 border-yellow-400`,
-    'N/A': `bg-gray-600 border-gray-500`,
-  };
-
-  const getLevel = (status) => {
-    if (!status || status === 'No') return 'N/A';
-    if (status.includes('Negra') || status.includes('Suspendido')) return 'Crítico';
-    if (status.includes('Gris') || status.includes('Alto Riesgo') || status.includes('Fiscal') || status.includes('REFIPRES')) return 'Alto';
-    return 'N/A';
-  };
-  
-  const calculatedLevel = getLevel(text);
-
-  return (
-    <span className={`inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-white rounded-full border-2 ${levelStyles[calculatedLevel]}`}>
-      {text || 'No listado'}
-    </span>
-  );
-};
-
-const OCIndexIndicator = ({ score }) => {
-    if (score === null || score === undefined) {
-        return <span className="font-semibold" style={{color: colors.textMuted}}>N/A</span>;
-    }
-    let colorClass = '';
-    if (score >= 7.5) colorClass = 'text-red-500';
-    else if (score >= 6.5) colorClass = 'text-orange-500';
-    else if (score >= 5.5) colorClass = 'text-yellow-500';
-    else colorClass = 'text-green-500';
-
-    return <span className={`font-bold text-lg ${colorClass}`}>{score.toFixed(2)}/10</span>;
-}
+    <script type="text/babel">
+        // --- DATOS CENTRALIZADOS ---
+        // v7: Base de datos globalmente exhaustiva.
+        const countriesData = [
+            { name: "Afghanistan", nameEs: "Afganistán", gafi: null, euAml: "Alto Riesgo", cpiScore: 16, gtiRank: 1, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.83, ocIndexCriminality: 8.0, analysis: "Riesgo extremo. Convergen un alto impacto del terrorismo, corrupción endémica, y una de las puntuaciones más altas en criminalidad organizada (tráfico de drogas y armas). El sistema financiero está colapsado y bajo el control de un régimen no reconocido." },
+            { name: "Albania", nameEs: "Albania", gafi: null, euAml: null, cpiScore: 36, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "No figura en listas de vigilancia. Presenta riesgos significativos por la corrupción y el crimen organizado, siendo un país de tránsito para el narcotráfico y la trata de personas en los Balcanes." },
+            { name: "Germany", nameEs: "Alemania", gafi: null, euAml: null, cpiScore: 75, gtiRank: 27, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Economía más grande de Europa con un marco regulatorio robusto. Sin embargo, ha sido criticada por debilidades en la supervisión del sector no financiero y el uso de efectivo, lo que la hace vulnerable al lavado de dinero." },
+            { name: "Saudi Arabia", nameEs: "Arabia Saudita", gafi: null, euAml: null, cpiScore: 52, gtiRank: 75, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Miembro del GAFI con un marco regulatorio en desarrollo. Los riesgos se derivan de su posición como una de las economías más grandes de la región, la financiación del terrorismo y la necesidad de una mayor transparencia en ciertos sectores." },
+            { name: "Algeria", nameEs: "Argelia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 34, gtiRank: 42, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la corrupción, la inestabilidad política y su rol como país de tránsito en el Mediterráneo." },
+            { name: "Angola", nameEs: "Angola", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 32, gtiRank: 51, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se derivan de la corrupción sistémica en la gestión de sus vastos recursos naturales." },
+            { name: "Anguilla", nameEs: "Anguila", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Centro financiero offshore en la lista negra fiscal de la UE por falta de transparencia. Riesgo de uso para la elusión fiscal." },
+            { name: "Antigua and Barbuda", nameEs: "Antigua y Barbuda", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: null, ocIndexCriminality: null, analysis: "Centro offshore en la lista gris fiscal de la UE. Riesgos asociados a la venta de ciudadanía por inversión y servicios financieros internacionales." },
+            { name: "Argentina", nameEs: "Argentina", gafi: null, euAml: null, cpiScore: 37, gtiRank: 76, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.47, ocIndexCriminality: 6.5, analysis: "Miembro del GAFI, no se encuentra en listas de vigilancia. Los riesgos se centran en la inestabilidad económica crónica, una alta percepción de corrupción y mercados criminales significativos, incluyendo el lavado de activos a través del sector inmobiliario y agrícola." },
+            { name: "Armenia", nameEs: "Armenia", gafi: null, euAml: null, cpiScore: 47, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "No figura en listas de vigilancia. Los riesgos se asocian a la corrupción post-soviética y su posición geográfica, que la hace vulnerable como ruta de tránsito para bienes ilícitos entre Asia y Europa." },
+            { name: "Australia", nameEs: "Australia", gafi: null, euAml: null, cpiScore: 75, gtiRank: 90, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Marco regulatorio robusto y alta transparencia. El riesgo no es normativo, sino de exposición: su mercado inmobiliario de alto valor y sus casinos han sido identificados como vulnerables al lavado de dinero transnacional, especialmente de capitales asiáticos." },
+            { name: "Azerbaijan", nameEs: "Azerbaiyán", gafi: null, euAml: null, cpiScore: 25, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Alto riesgo por corrupción y falta de transparencia en la gestión de sus recursos energéticos." },
+            { name: "Bahamas", nameEs: "Bahamas", gafi: null, euAml: null, cpiScore: 64, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Importante centro financiero offshore. Ha realizado reformas significativas en materia de transparencia, saliendo de las listas de riesgo. Sin embargo, el riesgo inherente a los servicios fiduciarios y a la banca privada internacional persiste." },
+            { name: "Bahrain", nameEs: "Baréin", gafi: null, euAml: null, cpiScore: 44, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Centro financiero del Golfo. Los riesgos se asocian a la financiación del terrorismo y la necesidad de una mayor transparencia." },
+            { name: "Bangladesh", nameEs: "Bangladés", gafi: null, euAml: null, cpiScore: 24, gtiRank: 35, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Riesgo muy alto por corrupción, debilidad institucional y vulnerabilidad a la financiación del terrorismo." },
+            { name: "Barbados", nameEs: "Barbados", gafi: null, euAml: null, cpiScore: 69, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Jurisdicción que ha salido recientemente de las listas del GAFI y la UE, demostrando un fuerte compromiso con la reforma. El riesgo residual se asocia a su sector financiero offshore, aunque ahora opera bajo un mayor escrutinio." },
+            { name: "Belarus", nameEs: "Bielorrusia", gafi: null, euAml: null, cpiScore: 39, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgo alto debido a su régimen autoritario, la corrupción y las sanciones internacionales." },
+            { name: "Belgium", nameEs: "Bélgica", gafi: null, euAml: null, cpiScore: 73, gtiRank: 61, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Centro financiero y político de Europa. Los riesgos se centran en la financiación del terrorismo, el lavado de dinero a través del comercio de diamantes y el fraude fiscal." },
+            { name: "Belize", nameEs: "Belice", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Centro offshore en la lista gris fiscal de la UE. Riesgos asociados a la falta de transparencia y el narcotráfico." },
+            { name: "Benin", nameEs: "Benín", gafi: null, euAml: null, cpiScore: 43, gtiRank: 26, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Riesgos de corrupción y ser un punto de tránsito para el tráfico ilícito en África Occidental." },
+            { name: "Bermuda", nameEs: "Bermudas", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: null, ocIndexCriminality: null, analysis: "Uno de los principales centros financieros y de seguros offshore del mundo. El riesgo se centra en su uso para la elusión fiscal por parte de multinacionales." },
+            { name: "Bhutan", nameEs: "Bután", gafi: null, euAml: null, cpiScore: 68, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 4.9, ocIndexCriminality: 5.0, analysis: "País de bajo riesgo con una fuerte reputación de baja corrupción." },
+            { name: "Bolivia", nameEs: "Bolivia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 29, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.98, ocIndexCriminality: 7.0, analysis: "Bajo monitoreo del GAFI. El riesgo se ve agravado por una alta puntuación en crimen organizado (especialmente narcotráfico) y una baja calificación en percepción de corrupción, indicando debilidad institucional." },
+            { name: "Bosnia and Herzegovina", nameEs: "Bosnia y Herzegovina", gafi: null, euAml: null, cpiScore: 35, gtiRank: 65, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Riesgo alto por corrupción endémica, crimen organizado e inestabilidad política." },
+            { name: "Botswana", nameEs: "Botsuana", gafi: null, euAml: null, cpiScore: 59, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Considerado uno de los países menos corruptos de África. Los riesgos se asocian al contrabando de diamantes." },
+            { name: "Brazil", nameEs: "Brasil", gafi: null, euAml: null, cpiScore: 36, gtiRank: 88, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.13, ocIndexCriminality: 7.1, analysis: "Miembro del GAFI, no figura en listas de vigilancia. Sin embargo, su perfil de riesgo es elevado debido a una alta puntuación en el Índice de Crimen Organizado (7.13), especialmente en mercados como el tráfico de cocaína y la tala ilegal, y una persistente y alta percepción de corrupción (CPI: 36). El riesgo principal no es normativo, sino la exposición a flujos financieros ilícitos generados por poderosas facciones criminales." },
+            { name: "Brunei", nameEs: "Brunéi", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "En la lista gris fiscal de la UE. Riesgos asociados a la falta de transparencia en un sultanato rico en petróleo." },
+            { name: "Bulgaria", nameEs: "Bulgaria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 45, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.25, ocIndexCriminality: 6.2, analysis: "Miembro de la UE bajo monitoreo del GAFI. El riesgo principal son las deficiencias ALD/CFT, pero se agrava por un nivel significativo de criminalidad organizada, que ejerce influencia en la economía y el estado." },
+            { name: "Burkina Faso", nameEs: "Burkina Faso", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 41, gtiRank: 2, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.55, ocIndexCriminality: 6.8, analysis: "Riesgo muy alto. Presente en listas ALD/CFT, con un altísimo impacto del terrorismo y un nivel elevado de criminalidad (tráfico de personas, armas y contrabando). La inestabilidad estatal aumenta todos los riesgos." },
+            { name: "Burundi", nameEs: "Burundi", gafi: null, euAml: null, cpiScore: 20, gtiRank: 31, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Riesgo muy alto por corrupción, inestabilidad política y violaciones de derechos humanos." },
+            { name: "Cabo Verde", nameEs: "Cabo Verde", gafi: null, euAml: null, cpiScore: 60, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Considerado un país de bajo riesgo en África, pero su ubicación lo hace vulnerable como punto de tránsito para el narcotráfico." },
+            { name: "Cambodia", nameEs: "Camboya", gafi: null, euAml: null, cpiScore: 22, gtiRank: 86, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Alto riesgo por corrupción, trata de personas, y ser un centro para estafas en línea y lavado de dinero a través de casinos." },
+            { name: "Cameroon", nameEs: "Camerún", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 26, gtiRank: 10, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo muy alto por corrupción, inestabilidad política y terrorismo." },
+            { name: "Canada", nameEs: "Canadá", gafi: null, euAml: null, cpiScore: 76, gtiRank: 68, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Marco regulatorio sólido. Sin embargo, ha sido criticado por vulnerabilidades en el sector inmobiliario ('snow-washing') y la dificultad para identificar a los beneficiarios finales de ciertas estructuras corporativas, lo que lo hace atractivo para el lavado de activos sofisticado." },
+            { name: "Central African Republic", nameEs: "República Centroafricana", gafi: null, euAml: null, cpiScore: 24, gtiRank: 71, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.4, ocIndexCriminality: 7.5, analysis: "Riesgo extremo. Estado fallido con conflicto armado, corrupción y explotación ilícita de recursos naturales." },
+            { name: "Chad", nameEs: "Chad", gafi: null, euAml: null, cpiScore: 19, gtiRank: 23, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Riesgo muy alto por corrupción, inestabilidad y su proximidad a zonas de conflicto." },
+            { name: "Chile", nameEs: "Chile", gafi: null, euAml: null, cpiScore: 66, gtiRank: 57, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.53, ocIndexCriminality: 5.5, analysis: "Considerado uno de los países con menor riesgo de la región. No figura en listas y tiene la mejor puntuación de percepción de corrupción de América Latina. Los riesgos son más bajos, pero existen mercados criminales relacionados con el robo de cobre y el contrabando." },
+            { name: "China", nameEs: "China", gafi: null, euAml: null, cpiScore: 42, gtiRank: 92, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "No está en listas de vigilancia, pero presenta riesgos significativos por la escala de su economía. El lavado de dinero basado en el comercio, la fuga de capitales y la corrupción son desafíos importantes. El control estatal sobre el sistema financiero añade una capa de complejidad al análisis de riesgo." },
+            { name: "Colombia", nameEs: "Colombia", gafi: null, euAml: null, cpiScore: 40, gtiRank: 14, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.75, ocIndexCriminality: 7.7, analysis: "No está en listas ALD/CFT, pero presenta un riesgo muy alto por crimen organizado (narcotráfico, minería ilegal), que es una fuente masiva de activos ilícitos. La corrupción y el terrorismo son factores agravantes persistentes." },
+            { name: "Comoros", nameEs: "Comoras", gafi: null, euAml: null, cpiScore: 19, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Riesgo alto por inestabilidad política y corrupción. Su programa de venta de pasaportes ha sido objeto de controversia." },
+            { name: "Congo", nameEs: "Congo", gafi: null, euAml: null, cpiScore: 21, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgo alto por corrupción en la gestión de sus recursos petroleros." },
+            { name: "Costa Rica", nameEs: "Costa Rica", gafi: null, euAml: null, cpiScore: 55, gtiRank: null, mexTaxHaven: "No", euTax: "Lista Negra Fiscal UE", ocIndexScore: 6.42, ocIndexCriminality: 6.4, analysis: "Presenta un perfil de riesgo dual. Aunque tiene una de las mejores puntuaciones de corrupción de la región, fue incluida en la lista negra fiscal de la UE por no cumplir con los estándares de transparencia. Además, su rol como centro logístico aumenta su vulnerabilidad al narcotráfico." },
+            { name: "Côte d'Ivoire", nameEs: "Costa de Marfil", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 45, gtiRank: 58, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgos de corrupción, inestabilidad política y contrabando de cacao." },
+            { name: "Croatia", nameEs: "Croacia", gafi: null, euAml: null, cpiScore: 50, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.7, ocIndexCriminality: 5.8, analysis: "Miembro de la UE. Los riesgos se asocian a la corrupción y su posición como país de tránsito." },
+            { name: "Cuba", nameEs: "Cuba", gafi: null, euAml: null, cpiScore: 41, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.85, ocIndexCriminality: 6.0, analysis: "No figura en listas ALD/CFT. Sin embargo, está designado como Estado Patrocinador del Terrorismo por EE.UU., lo que conlleva un riesgo de sanciones significativo para transacciones que tocan el sistema financiero estadounidense. La alta percepción de corrupción y la falta de transparencia del estado son factores de riesgo adicionales." },
+            { name: "Cyprus", nameEs: "Chipre", gafi: null, euAml: null, cpiScore: 53, gtiRank: 89, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Centro financiero de la UE que ha enfrentado graves escándalos de lavado de dinero, especialmente de capitales rusos. Su programa de 'pasaportes dorados' fue muy criticado." },
+            { name: "Czech Republic", nameEs: "República Checa", gafi: null, euAml: null, cpiScore: 57, gtiRank: 39, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Miembro de la UE de bajo riesgo. Los riesgos se centran en la corrupción y el fraude fiscal." },
+            { name: "Democratic Republic of the Congo", nameEs: "República Democrática del Congo", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 20, gtiRank: 17, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.5, ocIndexCriminality: 7.6, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo extremo por conflicto armado, corrupción endémica y explotación ilícita de recursos naturales." },
+            { name: "Denmark", nameEs: "Dinamarca", gafi: null, euAml: null, cpiScore: 90, gtiRank: 79, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "Jurisdicción de muy bajo riesgo con una de las puntuaciones de corrupción más bajas del mundo. Sin embargo, su mayor banco estuvo implicado en uno de los mayores escándalos de lavado de dinero de Europa, lo que demuestra que ninguna jurisdicción es inmune al riesgo de exposición." },
+            { name: "Djibouti", nameEs: "Yibuti", gafi: null, euAml: null, cpiScore: 31, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Ubicación estratégica pero con riesgos de corrupción y contrabando." },
+            { name: "Dominica", nameEs: "Dominica", gafi: null, euAml: null, cpiScore: 60, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Centro offshore con riesgos asociados a la venta de ciudadanía por inversión." },
+            { name: "Ecuador", nameEs: "Ecuador", gafi: null, euAml: null, cpiScore: 34, gtiRank: 22, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.07, ocIndexCriminality: 7.2, analysis: "No figura en listas de vigilancia, pero enfrenta una crisis de seguridad con un riesgo extremadamente alto por crimen organizado (narcotráfico, sicariato) y una alta percepción de corrupción. El riesgo operativo y de seguridad es muy elevado." },
+            { name: "Egypt", nameEs: "Egipto", gafi: null, euAml: null, cpiScore: 30, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Riesgos derivados de la corrupción, la falta de transparencia y la financiación del terrorismo." },
+            { name: "El Salvador", nameEs: "El Salvador", gafi: null, euAml: null, cpiScore: 31, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.08, ocIndexCriminality: 7.1, analysis: "El riesgo principal se deriva de un alto nivel de criminalidad histórica (maras) y una baja percepción de la transparencia gubernamental. La adopción de Bitcoin como moneda de curso legal introduce un vector de riesgo de lavado de dinero único y no probado que requiere un escrutinio especial." },
+            { name: "Equatorial Guinea", nameEs: "Guinea Ecuatorial", gafi: null, euAml: null, cpiScore: 13, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Riesgo extremo por corrupción a gran escala y cleptocracia, con una falta total de transparencia en la gestión de los ingresos del petróleo." },
+            { name: "Eritrea", nameEs: "Eritrea", gafi: null, euAml: null, cpiScore: 13, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgo extremo debido a un régimen autoritario y opaco, corrupción sistémica y sanciones internacionales." },
+            { name: "Estonia", nameEs: "Estonia", gafi: null, euAml: null, cpiScore: 76, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.4, ocIndexCriminality: 5.5, analysis: "Miembro de la UE. Su sector bancario ha estado en el centro de grandes escándalos de lavado de dinero, lo que demuestra una alta vulnerabilidad a los flujos ilícitos, especialmente de Rusia." },
+            { name: "Eswatini", nameEs: "Esuatini", gafi: null, euAml: null, cpiScore: 27, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Riesgo alto por falta de democracia, corrupción y debilidad institucional. En la lista gris fiscal de la UE." },
+            { name: "Ethiopia", nameEs: "Etiopía", gafi: null, euAml: null, cpiScore: 37, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Riesgos derivados de la inestabilidad política, el conflicto interno y la corrupción." },
+            { name: "Fiji", nameEs: "Fiyi", gafi: null, euAml: null, cpiScore: 55, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "En la lista negra fiscal de la UE por no cumplir con los estándares de transparencia. Riesgo de uso para la elusión fiscal." },
+            { name: "Finland", nameEs: "Finlandia", gafi: null, euAml: null, cpiScore: 88, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 4.8, ocIndexCriminality: 4.9, analysis: "Jurisdicción de muy bajo riesgo con una transparencia excepcional. Los riesgos son mínimos." },
+            { name: "France", nameEs: "Francia", gafi: null, euAml: null, cpiScore: 67, gtiRank: 40, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Marco regulatorio fuerte. Los riesgos se centran en la financiación del terrorismo, el lavado de dinero a través de bienes de lujo y el sector inmobiliario, y el fraude fiscal." },
+            { name: "Gabon", nameEs: "Gabón", gafi: null, euAml: null, cpiScore: 27, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgo alto por corrupción y falta de transparencia en la gestión de sus abundantes recursos naturales." },
+            { name: "Gambia", nameEs: "Gambia", gafi: null, euAml: null, cpiScore: 38, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Riesgos derivados de la corrupción y su vulnerabilidad como punto de tránsito para el narcotráfico en África Occidental." },
+            { name: "Georgia", nameEs: "Georgia", gafi: null, euAml: null, cpiScore: 53, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Ha realizado importantes reformas anticorrupción. Los riesgos persisten debido a su posición geográfica y la influencia de redes criminales de la región." },
+            { name: "Ghana", nameEs: "Ghana", gafi: null, euAml: null, cpiScore: 42, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Riesgos asociados a la corrupción y el lavado de dinero a través del comercio de oro y el sector inmobiliario." },
+            { name: "Grenada", nameEs: "Granada", gafi: null, euAml: null, cpiScore: 56, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "Centro offshore con riesgos asociados a la venta de ciudadanía por inversión y servicios financieros internacionales." },
+            { name: "Greece", nameEs: "Grecia", gafi: null, euAml: null, cpiScore: 49, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Miembro de la UE. Los riesgos se centran en la corrupción, la evasión fiscal y su posición como puerta de entrada a Europa para el contrabando y la trata de personas." },
+            { name: "Guatemala", nameEs: "Guatemala", gafi: null, euAml: null, cpiScore: 23, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.92, ocIndexCriminality: 7.0, analysis: "Riesgo muy alto debido a la combinación de una de las peores puntuaciones de percepción de corrupción de la región y un alto índice de criminalidad organizada. La debilidad institucional y la captura del estado por redes ilícitas son los principales factores de riesgo." },
+            { name: "Guinea", nameEs: "Guinea", gafi: null, euAml: null, cpiScore: 28, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Riesgo muy alto por corrupción, inestabilidad política y el comercio ilícito de recursos naturales, especialmente bauxita." },
+            { name: "Equatorial Guinea", nameEs: "Guinea Ecuatorial", gafi: null, euAml: null, cpiScore: 13, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Riesgo extremo por corrupción a gran escala y cleptocracia, con una falta total de transparencia en la gestión de los ingresos del petróleo." },
+            { name: "Guinea-Bissau", nameEs: "Guinea-Bisáu", gafi: null, euAml: null, cpiScore: 21, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.2, ocIndexCriminality: 7.3, analysis: "Considerado un narcoestado. Riesgo extremo por la penetración del narcotráfico en las estructuras estatales y la corrupción endémica." },
+            { name: "Guyana", nameEs: "Guyana", gafi: null, euAml: null, cpiScore: 39, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Economía en rápido crecimiento debido al petróleo. Los riesgos se derivan de la corrupción y la falta de capacidad institucional para gestionar la nueva riqueza, lo que la hace vulnerable al lavado de dinero." },
+            { name: "Haiti", nameEs: "Haití", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 16, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.1, ocIndexCriminality: 7.2, analysis: "Riesgo extremo. En la lista gris del GAFI y en la lista de la UE. Estado fallido con colapso institucional, corrupción endémica y violencia de pandillas." },
+            { name: "Honduras", nameEs: "Honduras", gafi: null, euAml: null, cpiScore: 22, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.37, ocIndexCriminality: 7.4, analysis: "Perfil de riesgo extremo. Combina una percepción de corrupción sistémica con un índice de criminalidad muy alto, siendo un corredor clave para el narcotráfico. La debilidad del estado de derecho y la violencia son factores críticos." },
+            { name: "Hong Kong", nameEs: "Hong Kong", gafi: null, euAml: null, cpiScore: 74, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Centro financiero global con un marco regulatorio robusto. El riesgo se deriva de su exposición al lavado de dinero transfronterizo, especialmente relacionado con China continental. Es considerado un REFIPRES por México debido a su sistema fiscal territorial." },
+            { name: "Hungary", nameEs: "Hungría", gafi: null, euAml: null, cpiScore: 41, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Miembro de la UE. Los riesgos se centran en la corrupción de alto nivel y el debilitamiento del estado de derecho." },
+            { name: "Iceland", nameEs: "Islandia", gafi: null, euAml: null, cpiScore: 77, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 4.5, ocIndexCriminality: 4.6, analysis: "País de muy bajo riesgo en la mayoría de los indicadores, con alta transparencia y bajo crimen organizado. Sin embargo, su tasa impositiva corporativa lo califica como un potencial REFIPRES bajo la ley mexicana, lo que requiere un análisis fiscal específico." },
+            { name: "India", nameEs: "India", gafi: null, euAml: null, cpiScore: 38, gtiRank: 14, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Economía masiva y compleja con un gran sector informal. Los riesgos se derivan de la corrupción, el lavado de dinero a través de métodos informales (hawala), el comercio de oro y el sector inmobiliario. La financiación del terrorismo también es una preocupación clave." },
+            { name: "Indonesia", nameEs: "Indonesia", gafi: null, euAml: null, cpiScore: 37, gtiRank: 30, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Economía emergente grande con riesgos significativos de corrupción, crimen organizado (tala ilegal, piratería) y un historial de financiación del terrorismo. No figura en listas de vigilancia, pero la debilidad institucional exige una debida diligencia reforzada." },
+            { name: "Iraq", nameEs: "Irak", gafi: null, euAml: null, cpiScore: 26, gtiRank: 13, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 7.2, ocIndexCriminality: 7.3, analysis: "Jurisdicción de riesgo extremo debido a la inestabilidad política, la corrupción endémica, un alto impacto del terrorismo y un elevado nivel de criminalidad organizada. El entorno operativo es altamente volátil y peligroso." },
+            { name: "Iran", nameEs: "Irán", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 23, gtiRank: 18, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.15, ocIndexCriminality: 7.0, analysis: "Riesgo crítico. En la lista negra del GAFI y sujeto a sanciones. El estado mismo está implicado en mercados criminales y financiación del terrorismo, lo que representa un riesgo sistémico para el sistema financiero internacional." },
+            { name: "Ireland", nameEs: "Irlanda", gafi: null, euAml: null, cpiScore: 77, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.3, ocIndexCriminality: 5.4, analysis: "Centro financiero internacional. El riesgo principal se asocia a la planificación fiscal agresiva por parte de multinacionales y el uso de estructuras corporativas complejas." },
+            { name: "Solomon Islands", nameEs: "Islas Salomón", gafi: null, euAml: null, cpiScore: 43, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Riesgo derivado de la debilidad institucional, la corrupción y la tala ilegal. La inestabilidad política es un factor de riesgo adicional." },
+            { name: "British Virgin Islands", nameEs: "Islas Vírgenes Británicas", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: null, ocIndexCriminality: null, analysis: "Jurisdicción de riesgo dual. Se encuentra bajo monitoreo del GAFI por deficiencias en la supervisión de su gran sector de servicios corporativos y fiduciarios. Simultáneamente, está en la lista gris fiscal de la UE. El riesgo principal es su uso para crear estructuras corporativas opacas." },
+            { name: "US Virgin Islands", nameEs: "Islas Vírgenes de EE. UU.", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Territorio de EE.UU. que figura en la lista negra fiscal de la UE por no cumplir con los estándares de transparencia e intercambio de información. El riesgo se centra en su potencial uso para la elusión fiscal." },
+            { name: "Israel", nameEs: "Israel", gafi: null, euAml: null, cpiScore: 64, gtiRank: 8, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Marco regulatorio robusto. Los riesgos se centran en la financiación del terrorismo y el lavado de dinero a través del sector de diamantes y alta tecnología." },
+            { name: "Italy", nameEs: "Italia", gafi: null, euAml: null, cpiScore: 54, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Miembro del G7. Enfrenta riesgos significativos por la infiltración de la mafia en la economía, la corrupción y el fraude fiscal." },
+            { name: "Jamaica", nameEs: "Jamaica", gafi: null, euAml: null, cpiScore: 44, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.95, ocIndexCriminality: 7.0, analysis: "Tras haber estado en la lista gris del GAFI, ha demostrado progreso en su marco normativo. Sin embargo, el riesgo real sigue siendo muy alto debido a un índice de criminalidad elevado por la violencia de las pandillas, el tráfico de drogas y las estafas de lotería ('lottery scamming')." },
+            { name: "Japan", nameEs: "Japón", gafi: null, euAml: null, cpiScore: 71, gtiRank: 72, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Marco regulatorio fuerte, pero el GAFI ha señalado debilidades en la supervisión de ciertos sectors y en la aplicación de la debida diligencia del cliente. El riesgo principal se asocia a los grupos criminales organizados (Yakuza) y al lavado de dinero a través de empresas fachada." },
+            { name: "Jordan", nameEs: "Jordania", gafi: null, euAml: null, cpiScore: 49, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Estable en una región volátil. Los riesgos se derivan de la financiación del terrorismo y los flujos de refugiados." },
+            { name: "Kazakhstan", nameEs: "Kazajistán", gafi: null, euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Riesgos asociados a la corrupción y la falta de transparencia en su vasto sector de recursos naturales." },
+            { name: "Kenya", nameEs: "Kenia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 32, gtiRank: 19, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la corrupción, el lavado de dinero a través de servicios de dinero móvil y su vulnerabilidad al terrorismo." },
+            { name: "Kyrgyzstan", nameEs: "Kirguistán", gafi: null, euAml: null, cpiScore: 25, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Alto riesgo por corrupción y crimen organizado, siendo un país de tránsito en las rutas de narcotráfico de Asia Central." },
+            { name: "Kosovo", nameEs: "Kosovo", gafi: null, euAml: null, cpiScore: 44, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgos derivados de la corrupción, el crimen organizado y la inestabilidad política en los Balcanes." },
+            { name: "Kuwait", nameEs: "Kuwait", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Centro financiero del Golfo. Los riesgos se asocian a la financiación del terrorismo y la necesidad de una mayor transparencia." },
+            { name: "Laos", nameEs: "Laos", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 33, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se derivan de la corrupción, el tráfico de drogas y la tala ilegal." },
+            { name: "Latvia", nameEs: "Letonia", gafi: null, euAml: null, cpiScore: 59, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Miembro de la UE. Ha enfrentado escándalos de lavado de dinero en su sector bancario, lo que indica un riesgo de exposición a flujos financieros ilícitos del espacio post-soviético." },
+            { name: "Lesotho", nameEs: "Lesoto", gafi: null, euAml: null, cpiScore: 37, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "Riesgos asociados a la corrupción y la debilidad institucional." },
+            { name: "Lebanon", nameEs: "Líbano", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 22, gtiRank: 64, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo extremo por crisis económica, colapso institucional, corrupción endémica y la influencia de Hezbollah, una organización designada como terrorista." },
+            { name: "Libya", nameEs: "Libia", gafi: null, euAml: null, cpiScore: 13, gtiRank: 53, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.5, ocIndexCriminality: 7.6, analysis: "Riesgo extremo. Estado fallido con conflicto armado, corrupción endémica, tráfico de personas y armas. El sistema financiero es disfuncional." },
+            { name: "Lithuania", nameEs: "Lituania", gafi: null, euAml: null, cpiScore: 63, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.6, ocIndexCriminality: 5.7, analysis: "Miembro de la UE. Su sector financiero es vulnerable a los flujos ilícitos del espacio post-soviético." },
+            { name: "Luxembourg", nameEs: "Luxemburgo", gafi: null, euAml: null, cpiScore: 78, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 4.85, ocIndexCriminality: 4.8, analysis: "Centro financiero de primer nivel con un marco regulatorio sofisticado y alta calificación en transparencia. No figura en ninguna lista de riesgo. El principal riesgo es inherente a su gran sector financiero, que puede ser atractivo para el lavado de activos de alta gama y la planificación fiscal agresiva, requiriendo una supervisión constante." },
+            { name: "North Macedonia", nameEs: "Macedonia del Norte", gafi: null, euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "Riesgos relacionados con la corrupción, el crimen organizado y su posición como país de tránsito en los Balcanes." },
+            { name: "Madagascar", nameEs: "Madagascar", gafi: null, euAml: null, cpiScore: 26, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Alto riesgo por corrupción, debilidad institucional y el comercio ilícito de recursos naturales y vida silvestre." },
+            { name: "Malawi", nameEs: "Malaui", gafi: null, euAml: null, cpiScore: 34, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Riesgos asociados a la corrupción y el contrabando de vida silvestre." },
+            { name: "Malaysia", nameEs: "Malasia", gafi: null, euAml: null, cpiScore: 50, gtiRank: 52, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Centro financiero del Sudeste Asiático. Ha estado implicado en grandes escándalos de corrupción (1MDB). Los riesgos persisten en la corrupción de alto nivel y el lavado de dinero." },
+            { name: "Maldives", nameEs: "Maldivas", gafi: null, euAml: null, cpiScore: 38, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Riesgos de corrupción y lavado de dinero a través de su lujoso sector turístico." },
+            { name: "Mali", nameEs: "Malí", gafi: null, euAml: "Alto Riesgo", cpiScore: 27, gtiRank: 4, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.3, ocIndexCriminality: 7.4, analysis: "Riesgo extremo. En la lista de la UE, con un alto impacto del terrorismo y el crimen organizado. La inestabilidad política y el conflicto armado lo convierten en una jurisdicción de máxima alerta." },
+            { name: "Malta", nameEs: "Malta", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Miembro de la UE que ha estado bajo intenso escrutinio por debilidades en su marco ALD/CFT, corrupción y la venta de ciudadanía. Aunque salió de la lista gris del GAFI, los riesgos reputacionales persisten." },
+            { name: "Morocco", nameEs: "Marruecos", gafi: null, euAml: null, cpiScore: 37, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgos de corrupción y ser un importante productor y exportador de cannabis. Ha mejorado su marco ALD/CFT para salir de la lista gris del GAFI." },
+            { name: "Mauritania", nameEs: "Mauritania", gafi: null, euAml: null, cpiScore: 30, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Riesgos de corrupción, tráfico de personas y vulnerabilidad a la financiación del terrorismo en la región del Sahel." },
+            { name: "Mauritius", nameEs: "Mauricio", gafi: null, euAml: null, cpiScore: 51, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.3, ocIndexCriminality: 5.4, analysis: "Centro financiero offshore que ha fortalecido su marco regulatorio para salir de las listas de riesgo. Persiste el riesgo inherente a la gestión de activos internacionales." },
+            { name: "Mexico", nameEs: "México", gafi: null, euAml: null, cpiScore: 31, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.57, ocIndexCriminality: 7.6, analysis: "No figura en listas ALD/CFT, pero sufre de un riesgo extremadamente alto por crimen organizado, con los cárteles más sofisticados del mundo. Esto, combinado con una alta percepción de corrupción, genera un entorno de alto riesgo para el lavado de dinero." },
+            { name: "Moldova", nameEs: "Moldavia", gafi: null, euAml: null, cpiScore: 43, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Riesgos de corrupción, crimen organizado y la influencia de redes criminales transnacionales." },
+            { name: "Monaco", nameEs: "Mónaco", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: null, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en el lavado de dinero a través de su sector de lujo, inmobiliario y financiero." },
+            { name: "Mongolia", nameEs: "Mongolia", gafi: null, euAml: null, cpiScore: 33, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Riesgos de corrupción en su sector minero y debilidad en la supervisión financiera." },
+            { name: "Montenegro", nameEs: "Montenegro", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Riesgos de corrupción y crimen organizado, siendo un punto de tránsito en los Balcanes." },
+            { name: "Mozambique", nameEs: "Mozambique", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 25, gtiRank: 17, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgo muy alto por terrorismo, corrupción y crimen organizado (tráfico de heroína y vida silvestre)." },
+            { name: "Myanmar", nameEs: "Myanmar", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 20, gtiRank: 9, mexTaxHaven: "No", euTax: null, ocIndexScore: 8.15, ocIndexCriminality: 8.3, analysis: "Riesgo crítico. En la lista negra del GAFI y con la puntuación más alta de criminalidad del mundo (producción de drogas sintéticas, trata de personas). La inestabilidad política y el conflicto armado agravan la situación." },
+            { name: "Namibia", nameEs: "Namibia", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 49, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la corrupción y el contrabando de diamantes y vida silvestre." },
+            { name: "Nepal", nameEs: "Nepal", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 34, gtiRank: 68, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Riesgos de corrupción y lavado de dinero a través de redes de remesas informales (hundi)." },
+            { name: "Nicaragua", nameEs: "Nicaragua", gafi: null, euAml: null, cpiScore: 17, gtiRank: 93, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.35, ocIndexCriminality: 6.5, analysis: "Aunque no está en listas ALD/CFT, presenta un riesgo muy alto por factores de gobernanza. Su puntuación de corrupción es de las peores del mundo (CPI: 17), indicando una captura casi total del estado. El riesgo se centra en la falta de transparencia, la debilidad institucional y el potencial uso del sistema para fines de corrupción política." },
+            { name: "Niger", nameEs: "Níger", gafi: null, euAml: null, cpiScore: 34, gtiRank: 5, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "Riesgo extremo debido a su posición en el epicentro de la crisis terrorista del Sahel. La inestabilidad política, la corrupción y las rutas de tráfico ilícito agravan la situación." },
+            { name: "Nigeria", nameEs: "Nigeria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 24, gtiRank: 8, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.28, ocIndexCriminality: 7.2, analysis: "Riesgo muy alto. La inclusión en listas ALD/CFT se combina con una alta corrupción, un impacto significativo del terrorismo y redes criminales muy desarrolladas (ciberdelincuencia, secuestro, piratería)." },
+            { name: "North Korea", nameEs: "Corea del Norte", gafi: "Llamada a la Acción (Lista Negra)", euAml: "Alto Riesgo", cpiScore: 17, gtiRank: 48, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.10, ocIndexCriminality: 7.5, analysis: "Riesgo extremo. En la lista negra del GAFI por financiación de la proliferación. El propio estado opera como una empresa criminal, utilizando ciberataques, contrabando y falsificación para financiar su régimen." },
+            { name: "Norway", nameEs: "Noruega", gafi: null, euAml: null, cpiScore: 81, gtiRank: 66, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Jurisdicción de muy bajo riesgo con una fuerte estado de derecho y alta transparencia. Los riesgos son mínimos y están relacionados con la sofisticación de su sector financiero." },
+            { name: "New Zealand", nameEs: "Nueva Zelanda", gafi: null, euAml: null, cpiScore: 83, gtiRank: 94, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Una de las jurisdicciones de menor riesgo del mundo, con una transparencia y un estado de derecho excepcionales. Los riesgos son mínimos." },
+            { name: "Oman", nameEs: "Omán", gafi: null, euAml: null, cpiScore: 55, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.0, ocIndexCriminality: 5.1, analysis: "País de bajo riesgo en general, pero su posición en una región volátil y su estatus como centro financiero crean riesgos de exposición. Considerado REFIPRES por México." },
+            { name: "Netherlands", nameEs: "Países Bajos", gafi: null, euAml: null, cpiScore: 78, gtiRank: 60, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Importante centro financiero con un marco regulatorio robusto. Sin embargo, su gran sector financiero y su papel en el comercio internacional lo convierten en un destino principal para el lavado de dinero sofisticado." },
+            { name: "Pakistan", nameEs: "Pakistán", gafi: null, euAml: null, cpiScore: 27, gtiRank: 2, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "Riesgo muy alto por financiación del terrorismo, corrupción y una gran economía informal. Aunque fue retirado de la lista gris del GAFI, los riesgos subyacentes siguen siendo significativos." },
+            { name: "Palau", nameEs: "Palaos", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Jurisdicción de alto riesgo fiscal, incluida en la lista negra de la UE por no cumplir con los estándares de transparencia." },
+            { name: "Panama", nameEs: "Panamá", gafi: null, euAml: null, cpiScore: 35, gtiRank: null, mexTaxHaven: "No", euTax: "Lista Negra Fiscal UE", ocIndexScore: 6.43, ocIndexCriminality: 6.5, analysis: "Riesgo dual: fiscal y criminal. Aunque ha salido de la lista gris del GAFI, permanece en la lista negra fiscal de la UE. Su posición como hub logístico lo hace vulnerable al crimen organizado transnacional (tráfico de drogas)." },
+            { name: "Papua New Guinea", nameEs: "Papúa Nueva Guinea", gafi: null, euAml: null, cpiScore: 29, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Riesgo muy alto debido a la corrupción endémica, la debilidad institucional y la explotación ilegal de sus vastos recursos naturales (tala, minería)." },
+            { name: "Paraguay", nameEs: "Paraguay", gafi: null, euAml: null, cpiScore: 28, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.43, ocIndexCriminality: 7.5, analysis: "Presenta un riesgo muy alto. Aunque no está en listas de vigilancia, combina una muy baja puntuación de corrupción con uno de los índices de criminalidad organizada más altos de la región, siendo un centro neurálgico para el contrabando y el lavado de dinero." },
+            { name: "Peru", nameEs: "Perú", gafi: null, euAml: null, cpiScore: 33, gtiRank: 48, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.62, ocIndexCriminality: 6.7, analysis: "El riesgo se deriva de la inestabilidad política crónica, una alta percepción de corrupción y la presencia de mercados criminales significativos como la minería ilegal y el narcotráfico. No figura en listas de vigilancia." },
+            { name: "Poland", nameEs: "Polonia", gafi: null, euAml: null, cpiScore: 53, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.7, ocIndexCriminality: 5.8, analysis: "Miembro de la UE. Los riesgos se centran en el fraude del IVA intracomunitario, la corrupción y su posición como país de tránsito para bienes ilícitos." },
+            { name: "Portugal", nameEs: "Portugal", gafi: null, euAml: null, cpiScore: 57, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.8, ocIndexCriminality: 5.9, analysis: "Miembro de la UE de bajo riesgo. Los riesgos se asocian a la corrupción y al lavado de dinero a través del sector inmobiliario, así como su posición geográfica como punto de entrada de drogas a Europa." },
+            { name: "United Kingdom", nameEs: "Reino Unido", gafi: null, euAml: null, cpiScore: 71, gtiRank: 41, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.45, ocIndexCriminality: 6.5, analysis: "Posee uno de los regímenes ALD/CFT más sofisticados y no figura en listas de riesgo. Sin embargo, Londres es un centro global para el lavado de activos, particularmente de origen ruso y de otras jurisdicciones de alto riesgo. El riesgo no es de debilidad regulatoria, sino de la exposición a flujos financieros ilícitos complejos y de gran escala." },
+            { name: "Dominican Republic", nameEs: "República Dominicana", gafi: null, euAml: null, cpiScore: 36, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.75, ocIndexCriminality: 6.8, analysis: "No se encuentra en listas de vigilancia. El principal factor de riesgo es su alta puntuación en el Índice de Crimen Organizado, derivado de su rol como un importante punto de transbordo de drogas hacia EE.UU. y Europa. La corrupción y la debilidad institucional son riesgos complementarios importantes." },
+            { name: "Romania", nameEs: "Rumania", gafi: null, euAml: null, cpiScore: 46, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "Miembro de la UE. Los riesgos se centran en la corrupción y el crimen organizado, particularmente el tráfico de personas y el fraude fiscal." },
+            { name: "Russia", nameEs: "Rusia", gafi: "Suspendido", euAml: null, cpiScore: 22, gtiRank: 16, mexTaxHaven: "Sí (REFIPRES)", euTax: "Lista Negra Fiscal UE", ocIndexScore: 6.31, ocIndexCriminality: 6.2, analysis: "Riesgo complejo. Suspensión del GAFI, en lista negra fiscal de la UE y alta corrupción. Las mafias rusas son actores globales y el estado utiliza actores criminales para sus objetivos, creando un entorno de alto riesgo." },
+            { name: "Rwanda", nameEs: "Ruanda", gafi: null, euAml: null, cpiScore: 57, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.1, ocIndexCriminality: 5.2, analysis: "Considerado un país con baja corrupción para los estándares africanos. Sin embargo, los riesgos se derivan de la inestabilidad en la región de los Grandes Lagos y su potencial como ruta de tránsito para minerales de conflicto." },
+            { name: "Samoa", nameEs: "Samoa", gafi: null, euAml: null, cpiScore: null, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: null, ocIndexCriminality: null, analysis: "Jurisdicción de alto riesgo fiscal, incluida en la lista negra de la UE por no cumplir con los estándares de transparencia. El riesgo se centra en su uso para la elusión fiscal." },
+            { name: "Saint Vincent and the Grenadines", nameEs: "San Vicente y las Granadinas", gafi: null, euAml: null, cpiScore: 63, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.4, ocIndexCriminality: 5.5, analysis: "Jurisdicción offshore con riesgos similares a sus vecinos del Caribe, relacionados con la banca internacional y la falta de transparencia en ciertas estructuras corporativas." },
+            { name: "Saint Lucia", nameEs: "Santa Lucía", gafi: null, euAml: null, cpiScore: 59, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Centro financiero offshore. El riesgo se asocia a su sector de servicios internacionales y a la venta de ciudadanía por inversión, que puede ser explotado para el lavado de dinero." },
+            { name: "Sao Tome and Principe", nameEs: "Santo Tomé y Príncipe", gafi: null, euAml: null, cpiScore: 45, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "No figura en listas de vigilancia. Los riesgos se asocian a la corrupción y la debilidad institucional en una pequeña economía insular." },
+            { name: "Senegal", nameEs: "Senegal", gafi: null, euAml: null, cpiScore: 45, gtiRank: 54, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "No está en listas de vigilancia. Los riesgos se centran en la corrupción y su vulnerabilidad al tráfico de drogas y la inestabilidad regional del Sahel." },
+            { name: "Serbia", nameEs: "Serbia", gafi: null, euAml: null, cpiScore: 35, gtiRank: 82, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "No figura en listas de vigilancia. Presenta riesgos significativos por la corrupción y el crimen organizado, siendo un país de tránsito en los Balcanes para diversas actividades ilícitas." },
+            { name: "Seychelles", nameEs: "Seychelles", gafi: null, euAml: null, cpiScore: 72, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 5.4, ocIndexCriminality: 5.5, analysis: "Centro financiero offshore que ha mejorado su marco regulatorio. Sin embargo, permanece en la lista gris fiscal de la UE, y el riesgo inherente a su sector de servicios corporativos exige una diligencia continua." },
+            { name: "Sierra Leone", nameEs: "Sierra Leona", gafi: null, euAml: null, cpiScore: 33, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "Riesgo muy alto por corrupción endémica, debilidad institucional y el comercio ilícito de recursos naturales, especialmente diamantes." },
+            { name: "Singapore", nameEs: "Singapur", gafi: null, euAml: null, cpiScore: 84, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.2, ocIndexCriminality: 5.3, analysis: "Centro financiero líder con un marco regulatorio muy estricto y baja corrupción. El riesgo es de exposición, al ser un imán para la riqueza global, lo que lo hace vulnerable al lavado de dinero sofisticado y a la gestión de activos de personas políticamente expuestas (PEPs) de alto riesgo." },
+            { name: "Somalia", nameEs: "Somalia", gafi: null, euAml: null, cpiScore: 9, gtiRank: 7, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.6, ocIndexCriminality: 7.7, analysis: "Riesgo extremo. Considerado un estado fallido, con la peor puntuación de corrupción del mundo, el mayor impacto del terrorismo (Al-Shabaab) y un alto nivel de piratería y crimen organizado. El sistema financiero formal es prácticamente inexistente." },
+            { name: "Sri Lanka", nameEs: "Sri Lanka", gafi: null, euAml: null, cpiScore: 32, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "Los riesgos se derivan de la inestabilidad política, la corrupción y un historial de financiación del terrorismo. Aunque no está en listas, la debilidad institucional requiere un escrutinio adicional." },
+            { name: "South Africa", nameEs: "Sudáfrica", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 41, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Bajo monitoreo del GAFI y en la lista de la UE. Los riesgos se centran en la sofisticación de los delitos financieros, la corrupción a gran escala ('state capture') y la violencia del crimen organizado." },
+            { name: "Sudan", nameEs: "Sudán", gafi: null, euAml: null, cpiScore: 15, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.1, ocIndexCriminality: 7.2, analysis: "Riesgo extremo debido al conflicto civil en curso, el colapso del estado, la corrupción endémica y un historial de sanciones. El entorno operativo es de máxima alerta." },
+            { name: "South Sudan", nameEs: "Sudán del Sur", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 8, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.3, ocIndexCriminality: 7.4, analysis: "Riesgo extremo. En la lista gris del GAFI y en la lista de la UE, con una de las peores puntuaciones de corrupción del mundo. El conflicto y la debilidad institucional hacen que el riesgo de desvío de fondos y corrupción sea máximo." },
+            { name: "Sweden", nameEs: "Suecia", gafi: null, euAml: null, cpiScore: 80, gtiRank: 50, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.9, ocIndexCriminality: 6.0, analysis: "País de bajo riesgo con un marco regulatorio robusto. Sin embargo, su sector bancario ha estado expuesto a escándalos de lavado de dinero a gran escala en la región del Báltico, lo que indica que el riesgo de exposición a flujos ilícitos complejos es real." },
+            { name: "Switzerland", nameEs: "Suiza", gafi: null, euAml: null, cpiScore: 81, gtiRank: 62, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.5, ocIndexCriminality: 5.6, analysis: "Principal centro mundial de gestión de patrimonios. El riesgo no proviene de un marco normativo débil, sino de la naturaleza de su industria, que gestiona enormes volúmenes de activos transfronterizos. El secreto bancario, aunque reducido, sigue siendo un factor cultural que exige una diligencia reforzada." },
+            { name: "Suriname", nameEs: "Surinam", gafi: null, euAml: null, cpiScore: 40, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "No figura en listas de vigilancia, pero presenta un riesgo muy alto por ser un centro para el narcotráfico y la minería ilegal de oro. La corrupción y la debilidad de las instituciones son factores de riesgo significativos." },
+            { name: "Syria", nameEs: "Siria", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 12, gtiRank: 3, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.8, ocIndexCriminality: 7.9, analysis: "Riesgo extremo. En la lista gris del GAFI (con un estatus casi de lista negra por su antigüedad), en la lista de la UE, patrocinador del terrorismo para EE.UU., y sujeto a sanciones integrales. El conflicto armado y el colapso del estado lo hacen una jurisdicción prohibitiva." },
+            { name: "Taiwan", nameEs: "Taiwán", gafi: null, euAml: null, cpiScore: 67, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 5.7, ocIndexCriminality: 5.8, analysis: "Jurisdicción de bajo riesgo con un estado de derecho sólido. El principal riesgo se deriva del lavado de dinero basado en el comercio con China continental. Es considerado REFIPRES por México." },
+            { name: "Thailand", nameEs: "Tailandia", gafi: null, euAml: null, cpiScore: 34, gtiRank: 28, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "No está en listas ALD/CFT. Los riesgos se derivan de la corrupción, el lavado de dinero a través del sector turístico y de bienes de lujo, y su rol en el tráfico de personas y drogas en el Sudeste Asiático." },
+            { name: "Tanzania", nameEs: "Tanzania", gafi: null, euAml: "Alto Riesgo", cpiScore: 41, gtiRank: 55, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.1, ocIndexCriminality: 6.2, analysis: "Aunque fue retirado de la lista gris del GAFI, permanece en la lista de alto riesgo de la UE. Los riesgos se centran en la corrupción y el contrabando de vida silvestre." },
+            { name: "Tajikistan", nameEs: "Tayikistán", gafi: null, euAml: null, cpiScore: 19, gtiRank: 70, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.5, ocIndexCriminality: 6.6, analysis: "Jurisdicción de muy alto riesgo por su bajísima puntuación en el IPC y su rol como corredor principal para el narcotráfico desde Afganistán. La debilidad institucional es extrema." },
+            { name: "Togo", nameEs: "Togo", gafi: null, euAml: null, cpiScore: 32, gtiRank: 24, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.3, ocIndexCriminality: 6.4, analysis: "No figura en listas de vigilancia. Los riesgos se centran en la corrupción y su uso como centro de tránsito para el tráfico ilícito, incluyendo drogas y productos falsificados. La debilidad institucional es un factor clave." },
+            { name: "Trinidad and Tobago", nameEs: "Trinidad y Tobago", gafi: null, euAml: "Alto Riesgo", cpiScore: 41, gtiRank: null, mexTaxHaven: "No", euTax: "Anexo I - No Cooperativa", ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Perfil de riesgo compuesto muy alto. Figura en la lista de alto riesgo ALD de la UE y en la lista negra fiscal de la UE. Su ubicación geográfica lo convierte en un punto clave para el narcotráfico, lo que se suma a los riesgos de corrupción y violencia." },
+            { name: "Turkey", nameEs: "Turquía", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: null, cpiScore: 34, gtiRank: 32, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 6.83, ocIndexCriminality: 6.9, analysis: "Jurisdicción de alto riesgo. Bajo monitoreo del GAFI y con un alto nivel de criminalidad organizada debido a su posición geográfica. Es un centro para el tráfico de drogas, personas y bienes ilícitos entre Asia y Europa." },
+            { name: "Turkmenistan", nameEs: "Turkmenistán", gafi: null, euAml: null, cpiScore: 17, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.7, ocIndexCriminality: 6.8, analysis: "Riesgo extremo debido a la corrupción sistémica y la opacidad total de un régimen autoritario. La falta de transparencia financiera es casi absoluta." },
+            { name: "Uganda", nameEs: "Uganda", gafi: null, euAml: null, cpiScore: 26, gtiRank: 33, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.6, ocIndexCriminality: 6.7, analysis: "Aunque salió de la lista gris del GAFI, los riesgos persisten debido a la alta corrupción, la inestabilidad regional y el comercio ilícito de recursos naturales." },
+            { name: "Ukraine", nameEs: "Ucrania", gafi: null, euAml: null, cpiScore: 35, gtiRank: 45, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.9, ocIndexCriminality: 7.0, analysis: "No figura en listas de vigilancia, pero el conflicto armado en curso crea un entorno de riesgo extremo. Los riesgos incluyen la corrupción, el desvío de ayuda internacional, el tráfico de armas y la desestabilización del sistema financiero. Se requiere máxima precaución." },
+            { name: "United Arab Emirates", nameEs: "Emiratos Árabes Unidos", gafi: null, euAml: null, cpiScore: 68, gtiRank: 67, mexTaxHaven: "Sí (REFIPRES)", euTax: null, ocIndexScore: 6.63, ocIndexCriminality: 7.0, analysis: "Centro financiero global que ha salido de la lista gris. Persiste un riesgo por ser un destino para actores criminales de todo el mundo y un centro para el lavado de activos de alto nivel, especialmente oro y bienes de lujo." },
+            { name: "Uruguay", nameEs: "Uruguay", gafi: null, euAml: null, cpiScore: 76, gtiRank: 98, mexTaxHaven: "No", euTax: null, ocIndexScore: 5.27, ocIndexCriminality: 5.2, analysis: "Considerado el país de menor riesgo de América Latina. Tiene la mejor puntuación de percepción de corrupción y un bajo índice de criminalidad en comparación regional. No figura en ninguna lista de vigilancia." },
+            { name: "Uzbekistan", nameEs: "Uzbekistán", gafi: null, euAml: null, cpiScore: 32, gtiRank: 90, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.4, ocIndexCriminality: 6.5, analysis: "No está en listas de vigilancia. Los riesgos se derivan de una alta percepción de corrupción y de ser un país de tránsito en las rutas de narcotráfico de Asia Central. Las reformas económicas en curso pueden presentar nuevas vulnerabilidades al lavado de dinero." },
+            { name: "Venezuela", nameEs: "Venezuela", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 10, gtiRank: 81, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.85, ocIndexCriminality: 6.9, analysis: "Riesgo extremo. Bajo monitoreo del GAFI, con una de las peores puntuaciones de corrupción del mundo. La crisis humanitaria y el colapso del estado de derecho crean un entorno de máxima alerta para cualquier operación." },
+            { name: "Vietnam", nameEs: "Vietnam", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 40, gtiRank: null, mexTaxHaven: "Sí (REFIPRES)", euTax: "Anexo II - Compromisos Pendientes", ocIndexScore: 6.2, ocIndexCriminality: 6.3, analysis: "Bajo escrutinio en múltiples frentes: lista gris del GAFI, alto riesgo para la UE y lista gris fiscal de la UE. El riesgo es compuesto, abarcando deficiencias en ALD/CFT, corrupción y falta de transparencia fiscal." },
+            { name: "Yemen", nameEs: "Yemen", gafi: "Monitoreo Intensificado (Lista Gris)", euAml: "Alto Riesgo", cpiScore: 13, gtiRank: 22, mexTaxHaven: "No", euTax: null, ocIndexScore: 7.0, ocIndexCriminality: 7.1, analysis: "Riesgo extremo debido al conflicto armado, colapso institucional, corrupción y presencia en listas ALD/CFT." },
+            { name: "Zambia", nameEs: "Zambia", gafi: null, euAml: null, cpiScore: 39, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.0, ocIndexCriminality: 6.1, analysis: "No figura en listas de vigilancia. Los riesgos se asocian a la corrupción y a su vulnerabilidad como país de tránsito para el contrabando de minerales y vida silvestre. La efectividad de su marco ALD/CFT es un área de monitoreo." },
+            { name: "Zimbabwe", nameEs: "Zimbabue", gafi: null, euAml: null, cpiScore: 21, gtiRank: null, mexTaxHaven: "No", euTax: null, ocIndexScore: 6.8, ocIndexCriminality: 6.9, analysis: "Aunque fue retirado de la lista gris del GAFI, Zimbabue presenta un riesgo muy alto debido a la corrupción endémica, la inestabilidad económica y el comercio ilícito de minerales, especialmente oro. La falta de transparencia gubernamental es un factor crítico." }
+        ].sort((a, b) => a.nameEs.localeCompare(b.nameEs));
 
 
-const CountryCard = ({ country }) => {
-  if (!country) {
-    return (
-      <div className={`p-8 rounded-lg mt-6 text-center`} style={{backgroundColor: colors.card}}>
-        <p style={{color: colors.textMuted}}>No se encontró el país. Intenta con otro nombre.</p>
-      </div>
-    );
-  }
+        // --- COMPONENTES DE LA UI ---
 
-  return (
-    <div className={`p-6 sm:p-8 rounded-2xl mt-6 shadow-2xl transition-all duration-300`} style={{backgroundColor: colors.card}}>
-      <h3 className="text-3xl sm:text-4xl font-bold mb-6" style={{color: colors.accent2}}>{country.nameEs}</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div>
-          <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Cumplimiento Normativo</h4>
-          <div className="space-y-3">
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>GAFI:</span> <RiskIndicator text={country.gafi} /></p>
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>UE (ALD):</span> <RiskIndicator text={country.euAml} /></p>
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>UE (Fiscal):</span> <RiskIndicator text={country.euTax} /></p>
+        const colors = {
+          background: '#393e41',
+          card: '#1b1b1e',
+          text: '#f6fff8',
+          accent1: '#ff8361', // Naranja
+          accent2: '#a663cc', // Morado
+          accent3: '#87d895', // Verde
+          textMuted: '#a0aec0',
+        };
+
+        const RiskIndicator = ({ text }) => {
+          const levelStyles = {
+            'Crítico': `bg-red-700 border-red-500`,
+            'Alto': `bg-yellow-600 border-yellow-400`,
+            'N/A': `bg-gray-600 border-gray-500`,
+          };
+
+          const getLevel = (status) => {
+            if (!status || status === 'No') return 'N/A';
+            if (status.includes('Negra') || status.includes('Suspendido')) return 'Crítico';
+            if (status.includes('Gris') || status.includes('Alto Riesgo') || status.includes('Fiscal') || status.includes('REFIPRES')) return 'Alto';
+            return 'N/A';
+          };
+          
+          const calculatedLevel = getLevel(text);
+
+          return (
+            <span className={`inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-white rounded-full border-2 ${levelStyles[calculatedLevel]}`}>
+              {text || 'No listado'}
+            </span>
+          );
+        };
+
+        const OCIndexIndicator = ({ score }) => {
+            if (score === null || score === undefined) {
+                return <span className="font-semibold" style={{color: colors.textMuted}}>N/A</span>;
+            }
+            let colorClass = '';
+            if (score >= 7.5) colorClass = 'text-red-500';
+            else if (score >= 6.5) colorClass = 'text-orange-500';
+            else if (score >= 5.5) colorClass = 'text-yellow-500';
+            else colorClass = 'text-green-500';
+
+            return <span className={`font-bold text-lg ${colorClass}`}>{score.toFixed(2)}/10</span>;
+        }
+
+
+        const CountryCard = ({ country }) => {
+          if (!country) {
+            return (
+              <div className={`p-8 rounded-lg mt-6 text-center`} style={{backgroundColor: colors.card}}>
+                <p style={{color: colors.textMuted}}>No se encontró el país. Intenta con otro nombre.</p>
+              </div>
+            );
+          }
+
+          return (
+            <div className={`p-6 sm:p-8 rounded-2xl mt-6 shadow-2xl transition-all duration-300`} style={{backgroundColor: colors.card}}>
+              <h3 className="text-3xl sm:text-4xl font-bold mb-6" style={{color: colors.accent2}}>{country.nameEs}</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div>
+                  <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Cumplimiento Normativo</h4>
+                  <div className="space-y-3">
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>GAFI:</span> <RiskIndicator text={country.gafi} /></p>
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>UE (ALD):</span> <RiskIndicator text={country.euAml} /></p>
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>UE (Fiscal):</span> <RiskIndicator text={country.euTax} /></p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Factores de Riesgo Endógeno</h4>
+                  <div className="space-y-3">
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>Corrupción (CPI):</span> {country.cpiScore ? `${country.cpiScore}/100` : 'N/A'}</p>
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>Terrorismo (GTI Rank):</span> {country.gtiRank ? `${country.gtiRank}/163` : 'N/A'}</p>
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>México (LISR):</span> <RiskIndicator text={country.mexTaxHaven} /></p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Crimen Organizado (OC Index)</h4>
+                  <div className="space-y-3">
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>Puntaje General:</span> <OCIndexIndicator score={country.ocIndexScore} /></p>
+                    <p><span className="font-semibold" style={{color: colors.textMuted}}>Nivel de Criminalidad:</span> <OCIndexIndicator score={country.ocIndexCriminality} /></p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Análisis Integrado de Riesgo</h4>
+                <p className="text-base" style={{color: colors.textMuted}}>{country.analysis}</p>
+              </div>
+            </div>
+          );
+        };
+
+        // --- COMPONENTES DE CONTENIDO POR PESTAÑA ---
+
+        const SearchTab = () => {
+          const [searchTerm, setSearchTerm] = React.useState('');
+          const [searchResult, setSearchResult] = React.useState(null);
+          const [hasSearched, setHasSearched] = React.useState(false);
+
+          const handleSearch = (e) => {
+            const term = e.target.value;
+            setSearchTerm(term);
+            setHasSearched(true);
+            if (term.trim() === '') {
+              setSearchResult(null);
+              setHasSearched(false);
+              return;
+            }
+            const result = countriesData.find(country => 
+              country.name.toLowerCase().includes(term.toLowerCase()) || 
+              country.nameEs.toLowerCase().includes(term.toLowerCase())
+            );
+            setSearchResult(result);
+          };
+
+          return (
+            <div>
+              <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Consulta de Jurisdicciones</h2>
+              <p className="mb-6" style={{color: colors.textMuted}}>
+                Ingresa el nombre de un país para ver su estatus consolidado en las principales listas de riesgo.
+              </p>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearch}
+                placeholder="Ej. Australia, China, Suiza..."
+                className="w-full p-4 rounded-lg text-lg border-2 transition-all"
+                style={{
+                  backgroundColor: colors.card, 
+                  color: colors.text, 
+                  borderColor: colors.accent2,
+                }}
+              />
+              {hasSearched && <CountryCard country={searchResult} />}
+              {!hasSearched && (
+                <div className={`p-8 rounded-lg mt-6 text-center`} style={{backgroundColor: colors.card, opacity: 0.7}}>
+                    <p className="text-lg" style={{color: colors.textMuted}}>Esperando consulta...</p>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        const MethodologyTab = () => (
+          <div>
+            <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Contexto y Metodología</h2>
+            <div className="space-y-6" style={{color: colors.textMuted}}>
+                <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                    <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>El Problema: Un Enfoque Incompleto</h3>
+                    <p>Las matrices de riesgo tradicionales se centran en el cumplimiento normativo (listas GAFI, UE), pero a menudo subestiman el riesgo real delictivo de una jurisdicción. Un país puede tener un marco legal robusto en papel y no estar en ninguna lista, pero ser un epicentro de operaciones para el crimen organizado transnacional. Este panel busca cerrar esa brecha.</p>
+                </div>
+                <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                    <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>Nuestra Metodología: Análisis Multidimensional</h3>
+                    <p>Integramos cinco dimensiones clave del riesgo para ofrecer una visión holística:</p>
+                    <ul className="list-decimal list-inside space-y-2 mt-4">
+                        <li><span className="font-semibold">Cumplimiento ALD/CFT:</span> Listas del GAFI y la UE. Miden la adecuación del marco normativo.</li>
+                        <li><span className="font-semibold">Riesgo Fiscal:</span> Listas de paraísos fiscales de la UE y México (LISR). Miden la opacidad y la falta de cooperación fiscal.</li>
+                        <li><span className="font-semibold">Corrupción:</span> Índice de Percepción de la Corrupción (CPI). Mide la percepción de la corrupción en el sector público, un facilitador clave del lavado de dinero.</li>
+                        <li><span className="font-semibold">Terrorismo:</span> Índice Global de Terrorismo (GTI). Mide el impacto del terrorismo, un riesgo específico de financiación.</li>
+                        <li><span className="font-semibold text-orange-400">Crimen Organizado:</span> Índice Global de Crimen Organizado (OC Index). Mide la escala, alcance e influencia de los mercados criminales y los actores criminales. <span className="font-bold">Esta es la variable clave que enriquece el análisis.</span></li>
+                    </ul>
+                </div>
+            </div>
           </div>
-        </div>
-        <div>
-          <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Factores de Riesgo Endógeno</h4>
-          <div className="space-y-3">
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>Corrupción (CPI):</span> {country.cpiScore ? `${country.cpiScore}/100` : 'N/A'}</p>
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>Terrorismo (GTI Rank):</span> {country.gtiRank ? `${country.gtiRank}/163` : 'N/A'}</p>
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>México (LISR):</span> <RiskIndicator text={country.mexTaxHaven} /></p>
-          </div>
-        </div>
-        <div>
-          <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Crimen Organizado (OC Index)</h4>
-          <div className="space-y-3">
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>Puntaje General:</span> <OCIndexIndicator score={country.ocIndexScore} /></p>
-            <p><span className="font-semibold" style={{color: colors.textMuted}}>Nivel de Criminalidad:</span> <OCIndexIndicator score={country.ocIndexCriminality} /></p>
-          </div>
-        </div>
-      </div>
+        );
 
-      <div>
-        <h4 className="font-bold text-lg mb-2" style={{color: colors.accent3}}>Análisis Integrado de Riesgo</h4>
-        <p className="text-base" style={{color: colors.textMuted}}>{country.analysis}</p>
-      </div>
-    </div>
-  );
-};
-
-// --- COMPONENTES DE CONTENIDO POR PESTAÑA ---
-
-const SearchTab = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResult, setSearchResult] = useState(null);
-  const [hasSearched, setHasSearched] = useState(false);
-
-  const handleSearch = (e) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    setHasSearched(true);
-    if (term.trim() === '') {
-      setSearchResult(null);
-      setHasSearched(false);
-      return;
-    }
-    const result = countriesData.find(country => 
-      country.name.toLowerCase().includes(term.toLowerCase()) || 
-      country.nameEs.toLowerCase().includes(term.toLowerCase())
-    );
-    setSearchResult(result);
-  };
-
-  return (
-    <div>
-      <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Consulta de Jurisdicciones</h2>
-      <p className="mb-6" style={{color: colors.textMuted}}>
-        Ingresa el nombre de un país para ver su estatus consolidado en las principales listas de riesgo.
-      </p>
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={handleSearch}
-        placeholder="Ej. Australia, China, Suiza..."
-        className="w-full p-4 rounded-lg text-lg border-2 transition-all"
-        style={{
-          backgroundColor: colors.card, 
-          color: colors.text, 
-          borderColor: colors.accent2,
-        }}
-      />
-      {hasSearched && <CountryCard country={searchResult} />}
-      {!hasSearched && (
-        <div className={`p-8 rounded-lg mt-6 text-center`} style={{backgroundColor: colors.card, opacity: 0.7}}>
-            <p className="text-lg" style={{color: colors.textMuted}}>Esperando consulta...</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const MethodologyTab = () => (
-  <div>
-    <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Contexto y Metodología</h2>
-    <div className="space-y-6" style={{color: colors.textMuted}}>
-        <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
-            <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>El Problema: Un Enfoque Incompleto</h3>
-            <p>Las matrices de riesgo tradicionales se centran en el cumplimiento normativo (listas GAFI, UE), pero a menudo subestiman el riesgo real delictivo de una jurisdicción. Un país puede tener un marco legal robusto en papel y no estar en ninguna lista, pero ser un epicentro de operaciones para el crimen organizado transnacional. Este panel busca cerrar esa brecha.</p>
-        </div>
-        <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
-            <h3 className="font-bold text-xl mb-2" style={{color: colors.accent3}}>Nuestra Metodología: Análisis Multidimensional</h3>
-            <p>Integramos cinco dimensiones clave del riesgo para ofrecer una visión holística:</p>
-            <ul className="list-decimal list-inside space-y-2 mt-4">
-                <li><span className="font-semibold">Cumplimiento ALD/CFT:</span> Listas del GAFI y la UE. Miden la adecuación del marco normativo.</li>
-                <li><span className="font-semibold">Riesgo Fiscal:</span> Listas de paraísos fiscales de la UE y México (LISR). Miden la opacidad y la falta de cooperación fiscal.</li>
-                <li><span className="font-semibold">Corrupción:</span> Índice de Percepción de la Corrupción (CPI). Mide la percepción de la corrupción en el sector público, un facilitador clave del lavado de dinero.</li>
-                <li><span className="font-semibold">Terrorismo:</span> Índice Global de Terrorismo (GTI). Mide el impacto del terrorismo, un riesgo específico de financiación.</li>
-                <li><span className="font-semibold text-orange-400">Crimen Organizado:</span> Índice Global de Crimen Organizado (OC Index). Mide la escala, alcance e influencia de los mercados criminales y los actores criminales. <span className="font-bold">Esta es la variable clave que enriquece el análisis.</span></li>
-            </ul>
-        </div>
-    </div>
-  </div>
-);
-
-const RiskProfilesTab = () => (
-    <div>
-        <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Perfiles de Riesgo Integrados (con OC Index)</h2>
-        <p className="mb-6" style={{color: colors.textMuted}}>La inclusión del OC Index nos permite crear perfiles de riesgo más precisos y realistas.</p>
-        <div className="space-y-6">
-            <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
-                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 1: "Estado Criminalizado" (Ej. Myanmar, Corea del Norte)</h3>
-                <p style={{color: colors.textMuted}}>En <span className="font-semibold">Lista Negra GAFI</span> y con un <span className="font-semibold text-red-500">OC Index {'>'} 7.5</span>. El riesgo es máximo. El estado no solo es incapaz de combatir el crimen, sino que participa activamente en él. Las transacciones son prácticamente indefendibles desde una perspectiva de riesgo.</p>
+        const RiskProfilesTab = () => (
+            <div>
+                <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Perfiles de Riesgo Integrados (con OC Index)</h2>
+                <p className="mb-6" style={{color: colors.textMuted}}>La inclusión del OC Index nos permite crear perfiles de riesgo más precisos y realistas.</p>
+                <div className="space-y-6">
+                    <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 1: "Estado Criminalizado" (Ej. Myanmar, Corea del Norte)</h3>
+                        <p style={{color: colors.textMuted}}>En <span className="font-semibold">Lista Negra GAFI</span> y con un <span className="font-semibold text-red-500">OC Index {'>'} 7.5</span>. El riesgo es máximo. El estado no solo es incapaz de combatir el crimen, sino que participa activamente en él. Las transacciones son prácticamente indefendibles desde una perspectiva de riesgo.</p>
+                    </div>
+                    <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 2: "El Hub Complaciente" (Ej. EAU)</h3>
+                        <p style={{color: colors.textMuted}}>Fuera de listas ALD/CFT, pero con un <span className="font-semibold text-orange-500">OC Index de Criminalidad alto ({'>'} 6.5)</span>. Son centros financieros que, a pesar de sus esfuerzos regulatorios, atraen a actores y capitales ilícitos de todo el mundo. El riesgo es de "lavado de segunda etapa" y de tratar con beneficiarios finales de alto riesgo.</p>
+                    </div>
+                    <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 3: "El Gigante Herido" (Ej. México, Colombia, Brasil)</h3>
+                        <p style={{color: colors.textMuted}}>Fuera de listas GAFI/UE, pero con un <span className="font-semibold text-red-500">OC Index de Criminalidad {'>'} 7.0</span> y baja puntuación en el CPI. El marco legal es adecuado, pero es superado por la escala y poder del crimen organizado. El riesgo principal es la infiltración de capitales ilícitos en la economía formal.</p>
+                    </div>
+                     <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
+                        <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 4: "Frontera de Riesgo" (Ej. Turquía, Bulgaria)</h3>
+                        <p style={{color: colors.textMuted}}>En <span className="font-semibold">Lista Gris del GAFI</span> y con un <span className="font-semibold text-orange-500">OC Index {'>'} 6.0</span>. La debilidad de su sistema ALD/CFT se combina con su rol como puente para mercados criminales (drogas, migrantes). El riesgo es que las deficiencias regulatorias sean explotadas activamente por redes criminales.</p>
+                    </div>
+                </div>
             </div>
-            <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
-                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 2: "El Hub Complaciente" (Ej. EAU)</h3>
-                <p style={{color: colors.textMuted}}>Fuera de listas ALD/CFT, pero con un <span className="font-semibold text-orange-500">OC Index de Criminalidad alto ({'>'} 6.5)</span>. Son centros financieros que, a pesar de sus esfuerzos regulatorios, atraen a actores y capitales ilícitos de todo el mundo. El riesgo es de "lavado de segunda etapa" y de tratar con beneficiarios finales de alto riesgo.</p>
+        );
+
+        const RecommendationsTab = () => (
+            <div>
+                <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Recomendaciones Estratégicas Evolucionadas</h2>
+                <p className="mb-6" style={{color: colors.textMuted}}>Cómo utilizar este modelo enriquecido para una gestión de riesgos superior.</p>
+                <div className="space-y-4" style={{color: colors.textMuted}}>
+                    <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                        <summary className="font-semibold text-lg" style={{color: colors.accent3}}>1. Segmentar la Debida Diligencia por Perfil de Riesgo</summary>
+                        <p className="mt-2">No toda la DDR es igual. Para un "Gigante Herido" (México, Brasil), la DDR debe enfocarse en la <span className="font-semibold">identificación de la fuente de la riqueza y los fondos</span>, buscando conexiones con sectores vulnerables al crimen organizado. Para un "Hub Complaciente" (EAU), el foco debe estar en el <span className="font-semibold">análisis reputacional y de redes del beneficiario final</span>.</p>
+                    </details>
+                    <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                        <summary className="font-semibold text-lg" style={{color: colors.accent3}}>2. Utilizar el OC Index como Calificador de Riesgo Inherente</summary>
+                        <p className="mt-2">Cualquier jurisdicción con un OC Index de Criminalidad superior a 6.5 debe ser considerada de <span className="font-semibold">riesgo inherentemente alto</span>, independientemente de su estatus en las listas GAFI/UE. Esto debe activar protocolos de debida diligencia reforzada y requerir aprobación de un nivel jerárquico superior.</p>
+                    </details>
+                    <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
+                        <summary className="font-semibold text-lg" style={{color: colors.accent3}}>3. Desarrollar "Red Flags" Basadas en Tipologías Criminales</summary>
+                        <p className="mt-2">Conocer los principales mercados criminales de un país (según el OC Index) permite crear alertas más inteligentes. Por ejemplo, en un país con alto riesgo de tráfico de personas, las transacciones con agencias de viajes o empresas de transporte deben ser examinadas con mayor escrutinio.</p>
+                    </details>
+                </div>
             </div>
-            <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
-                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 3: "El Gigante Herido" (Ej. México, Colombia, Brasil)</h3>
-                <p style={{color: colors.textMuted}}>Fuera de listas GAFI/UE, pero con un <span className="font-semibold text-red-500">OC Index de Criminalidad {'>'} 7.0</span> y baja puntuación en el CPI. El marco legal es adecuado, pero es superado por la escala y poder del crimen organizado. El riesgo principal es la infiltración de capitales ilícitos en la economía formal.</p>
+        );
+
+
+        // --- COMPONENTE PRINCIPAL DE LA APLICACIÓN ---
+
+        const App = () => {
+          const [activeTab, setActiveTab] = React.useState('search');
+
+          const tabs = {
+            search: { label: 'Buscador', component: <SearchTab /> },
+            methodology: { label: 'Contexto y Metodología', component: <MethodologyTab /> },
+            profiles: { label: 'Perfiles de Riesgo', component: <RiskProfilesTab /> },
+            recommendations: { label: 'Recomendaciones', component: <RecommendationsTab /> },
+          };
+
+          const renderContent = () => {
+            return tabs[activeTab].component;
+          };
+
+          return (
+            <div className="min-h-screen w-full p-4 sm:p-6 md:p-8">
+              <header className="text-center mb-8">
+                <h1 className="text-4xl sm:text-5xl font-extrabold" style={{color: colors.text}}>
+                  Panel Interactivo de Riesgo de Jurisdicciones
+                </h1>
+                <p className="text-lg mt-2" style={{color: colors.textMuted}}>Un enfoque multidimensional que integra Cumplimiento y Riesgo Real Delictivo.</p>
+              </header>
+
+              <nav className="flex flex-wrap justify-center items-center mb-8 gap-2 sm:gap-4">
+                {Object.keys(tabs).map(tabKey => (
+                  <button
+                    key={tabKey}
+                    onClick={() => setActiveTab(tabKey)}
+                    className={`px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition-all duration-300 border-2 ${
+                      activeTab === tabKey
+                        ? 'shadow-lg'
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                    style={{
+                        backgroundColor: activeTab === tabKey ? colors.accent2 : colors.card,
+                        borderColor: activeTab === tabKey ? colors.accent2 : 'transparent'
+                    }}
+                  >
+                    {tabs[tabKey].label}
+                  </button>
+                ))}
+              </nav>
+
+              <main className="max-w-5xl mx-auto">
+                {renderContent()}
+              </main>
+
+              <footer className="text-center mt-12 pt-6 border-t" style={{borderColor: colors.card}}>
+                <p className="text-sm" style={{color: colors.textMuted}}>
+                  Visualización de datos elaborada a partir del "Análisis de Riesgos de Jurisdicciones 2025" elaborado por GMC360.
+                </p>
+              </footer>
             </div>
-             <div className="p-6 rounded-lg" style={{backgroundColor: colors.card}}>
-                <h3 className="font-bold text-xl mb-2" style={{color: colors.accent1}}>Perfil 4: "Frontera de Riesgo" (Ej. Turquía, Bulgaria)</h3>
-                <p style={{color: colors.textMuted}}>En <span className="font-semibold">Lista Gris del GAFI</span> y con un <span className="font-semibold text-orange-500">OC Index {'>'} 6.0</span>. La debilidad de su sistema ALD/CFT se combina con su rol como puente para mercados criminales (drogas, migrantes). El riesgo es que las deficiencias regulatorias sean explotadas activamente por redes criminales.</p>
-            </div>
-        </div>
-    </div>
-);
+          );
+        }
 
-const RecommendationsTab = () => (
-    <div>
-        <h2 className="text-3xl font-bold mb-4" style={{color: colors.text}}>Recomendaciones Estratégicas Evolucionadas</h2>
-        <p className="mb-6" style={{color: colors.textMuted}}>Cómo utilizar este modelo enriquecido para una gestión de riesgos superior.</p>
-        <div className="space-y-4" style={{color: colors.textMuted}}>
-            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
-                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>1. Segmentar la Debida Diligencia por Perfil de Riesgo</summary>
-                <p className="mt-2">No toda la DDR es igual. Para un "Gigante Herido" (México, Brasil), la DDR debe enfocarse en la <span className="font-semibold">identificación de la fuente de la riqueza y los fondos</span>, buscando conexiones con sectores vulnerables al crimen organizado. Para un "Hub Complaciente" (EAU), el foco debe estar en el <span className="font-semibold">análisis reputacional y de redes del beneficiario final</span>.</p>
-            </details>
-            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
-                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>2. Utilizar el OC Index como Calificador de Riesgo Inherente</summary>
-                <p className="mt-2">Cualquier jurisdicción con un OC Index de Criminalidad superior a 6.5 debe ser considerada de <span className="font-semibold">riesgo inherentemente alto</span>, independientemente de su estatus en las listas GAFI/UE. Esto debe activar protocolos de debida diligencia reforzada y requerir aprobación de un nivel jerárquico superior.</p>
-            </details>
-            <details className="p-4 rounded-lg cursor-pointer" style={{backgroundColor: colors.card}}>
-                <summary className="font-semibold text-lg" style={{color: colors.accent3}}>3. Desarrollar "Red Flags" Basadas en Tipologías Criminales</summary>
-                <p className="mt-2">Conocer los principales mercados criminales de un país (según el OC Index) permite crear alertas más inteligentes. Por ejemplo, en un país con alto riesgo de tráfico de personas, las transacciones con agencias de viajes o empresas de transporte deben ser examinadas con mayor escrutinio.</p>
-            </details>
-        </div>
-    </div>
-);
-
-
-// --- COMPONENTE PRINCIPAL DE LA APLICACIÓN ---
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState('search');
-
-  const tabs = {
-    search: { label: 'Buscador', component: <SearchTab /> },
-    methodology: { label: 'Contexto y Metodología', component: <MethodologyTab /> },
-    profiles: { label: 'Perfiles de Riesgo', component: <RiskProfilesTab /> },
-    recommendations: { label: 'Recomendaciones', component: <RecommendationsTab /> },
-  };
-
-  const renderContent = () => {
-    return tabs[activeTab].component;
-  };
-
-  return (
-    <div className="min-h-screen w-full p-4 sm:p-6 md:p-8" style={{ backgroundColor: colors.background, color: colors.text, fontFamily: "'Inter', sans-serif" }}>
-      <header className="text-center mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold" style={{color: colors.text}}>
-          Panel Interactivo de Riesgo de Jurisdicciones
-        </h1>
-        <p className="text-lg mt-2" style={{color: colors.textMuted}}>Un enfoque multidimensional que integra Cumplimiento y Riesgo Real Delictivo.</p>
-      </header>
-
-      <nav className="flex flex-wrap justify-center items-center mb-8 gap-2 sm:gap-4">
-        {Object.keys(tabs).map(tabKey => (
-          <button
-            key={tabKey}
-            onClick={() => setActiveTab(tabKey)}
-            className={`px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition-all duration-300 border-2 ${
-              activeTab === tabKey
-                ? 'shadow-lg'
-                : 'opacity-70 hover:opacity-100'
-            }`}
-            style={{
-                backgroundColor: activeTab === tabKey ? colors.accent2 : colors.card,
-                borderColor: activeTab === tabKey ? colors.accent2 : 'transparent'
-            }}
-          >
-            {tabs[tabKey].label}
-          </button>
-        ))}
-      </nav>
-
-      <main className="max-w-5xl mx-auto">
-        {renderContent()}
-      </main>
-
-      <footer className="text-center mt-12 pt-6 border-t" style={{borderColor: colors.card}}>
-        <p className="text-sm" style={{color: colors.textMuted}}>
-          Visualización de datos elaborada a partir del "Análisis de Riesgos de Jurisdicciones 2025" elaborado por GMC360.
-        </p>
-      </footer>
-    </div>
-  );
-}
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
