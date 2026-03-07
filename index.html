@@ -253,42 +253,45 @@
         };
 
         // --- 360SCORE: Calificación de Riesgo PLD/FT Consolidada ---
+        // --- 360SCORE v2: Metodología corregida ---
+        // Distinción clave: "Prohibido" (hard stop regulatorio) vs "Riesgo Extremo" (decisión de negocio)
         const calculate360Score = (c) => {
           let max = 1;
 
-          // GAFI
+          // GAFI — Lista Negra es el único hard stop regulatorio absoluto
           if (c.gafi && c.gafi.includes('Negra')) max = Math.max(max, 5);
           else if (c.gafi && c.gafi.includes('Gris')) max = Math.max(max, 4);
 
-          // UE AML
-          if (c.euAml === 'Alto Riesgo') max = Math.max(max, 4);
+          // UE AML → solo sube a 3 por sí sola (no a 4)
+          // Refleja vigilancia elevada, no prohibición
+          if (c.euAml === 'Alto Riesgo') max = Math.max(max, 3);
 
           // UE Fiscal
           if (c.euTax && c.euTax.includes('Anexo I')) max = Math.max(max, 3);
           else if (c.euTax && c.euTax.includes('Anexo II')) max = Math.max(max, 2);
 
-          // CPI — menor score = más corrupto = mayor riesgo
+          // CPI — umbrales calibrados: solo CPI ≤25 sube a 4 (corrupción sistémica extrema)
           if (c.cpiScore !== null && c.cpiScore !== undefined) {
-            if (c.cpiScore <= 20) max = Math.max(max, 5);
-            else if (c.cpiScore <= 30) max = Math.max(max, 4);
-            else if (c.cpiScore <= 45) max = Math.max(max, 3);
-            else if (c.cpiScore <= 60) max = Math.max(max, 2);
+            if (c.cpiScore <= 15) max = Math.max(max, 5);
+            else if (c.cpiScore <= 25) max = Math.max(max, 4);
+            else if (c.cpiScore <= 40) max = Math.max(max, 3);
+            else if (c.cpiScore <= 55) max = Math.max(max, 2);
           }
 
-          // GTI — posición más baja = más afectado por terrorismo = mayor riesgo
+          // GTI — solo top 3 llega a 5; top 8 a 4 (terrorismo dominante)
           if (c.gtiRank !== null && c.gtiRank !== undefined) {
-            if (c.gtiRank <= 5) max = Math.max(max, 5);
-            else if (c.gtiRank <= 10) max = Math.max(max, 4);
-            else if (c.gtiRank <= 20) max = Math.max(max, 3);
-            else if (c.gtiRank <= 30) max = Math.max(max, 2);
+            if (c.gtiRank <= 3) max = Math.max(max, 5);
+            else if (c.gtiRank <= 8) max = Math.max(max, 4);
+            else if (c.gtiRank <= 15) max = Math.max(max, 3);
+            else if (c.gtiRank <= 25) max = Math.max(max, 2);
           }
 
-          // OC Index
+          // OC Index — umbral 7.5 para nivel 4 (crimen organizado dominante)
           if (c.ocIndexScore !== null && c.ocIndexScore !== undefined) {
-            if (c.ocIndexScore >= 8.0) max = Math.max(max, 5);
-            else if (c.ocIndexScore >= 7.0) max = Math.max(max, 4);
-            else if (c.ocIndexScore >= 6.5) max = Math.max(max, 3);
-            else if (c.ocIndexScore >= 5.5) max = Math.max(max, 2);
+            if (c.ocIndexScore >= 8.5) max = Math.max(max, 5);
+            else if (c.ocIndexScore >= 7.5) max = Math.max(max, 4);
+            else if (c.ocIndexScore >= 7.0) max = Math.max(max, 3);
+            else if (c.ocIndexScore >= 6.5) max = Math.max(max, 2);
           }
 
           // México LISR / REFIPRES
@@ -297,43 +300,61 @@
           return max;
         };
 
+        const get360Label = (score, gafi) => {
+          const isBlacklisted = gafi && gafi.includes('Negra');
+          if (score === 5 && isBlacklisted) return { label: 'PROHIBIDO', sub: 'Obligación regulatoria — no operar', action: 'GAFI Lista Negra / Sanciones' };
+          if (score === 5)                  return { label: 'Riesgo Extremo', sub: 'DDC máxima — decisión de negocio', action: 'Aprobación Dirección + Comité' };
+          if (score === 4)                  return { label: 'Riesgo Alto', sub: 'DDC reforzada obligatoria', action: 'Aprobación Oficial de Cumplimiento' };
+          if (score === 3)                  return { label: 'Riesgo Elevado', sub: 'DDC específica requerida', action: 'Revisión periódica intensificada' };
+          if (score === 2)                  return { label: 'Riesgo Moderado', sub: 'DDC estándar con seguimiento', action: 'Monitoreo transaccional regular' };
+          return                                   { label: 'Riesgo Bajo', sub: 'DDC estándar', action: 'Proceso ordinario' };
+        };
+
         const Score360Badge = ({ country }) => {
           const score = calculate360Score(country);
-          const config = {
-            5: { label: 'Prohibido',     sub: 'Riesgo Extremo', bg: '#7f1d1d', border: '#ef4444', text: '#fca5a5' },
-            4: { label: 'Muy Alto',      sub: 'Riesgo Muy Alto', bg: '#78350f', border: '#f97316', text: '#fdba74' },
-            3: { label: 'Alto',          sub: 'Riesgo Alto',    bg: '#713f12', border: '#eab308', text: '#fde047' },
-            2: { label: 'Moderado',      sub: 'Riesgo Moderado', bg: '#1a3a2a', border: '#22c55e', text: '#86efac' },
-            1: { label: 'Bajo',          sub: 'Riesgo Bajo',    bg: '#0f2027', border: '#38bdf8', text: '#7dd3fc' },
+          const { label, sub, action } = get360Label(score, country.gafi);
+          const isHardStop = score === 5 && country.gafi && country.gafi.includes('Negra');
+
+          const palette = {
+            5: { bg: isHardStop ? '#3b0000' : '#1a0a1a', border: isHardStop ? '#dc2626' : '#9333ea', text: isHardStop ? '#fca5a5' : '#e9d5ff', glow: isHardStop ? '#dc262666' : '#9333ea55' },
+            4: { bg: '#180d00', border: '#ea580c', text: '#fed7aa', glow: '#ea580c55' },
+            3: { bg: '#181200', border: '#ca8a04', text: '#fef08a', glow: '#ca8a0455' },
+            2: { bg: '#001810', border: '#16a34a', text: '#bbf7d0', glow: '#16a34a44' },
+            1: { bg: '#001020', border: '#2563eb', text: '#bfdbfe', glow: '#2563eb44' },
           };
-          const c = config[score];
+          const p = palette[score];
+
           return (
             <div style={{
               background: `linear-gradient(135deg, #1a1200 0%, #2d1f00 100%)`,
               border: `2px solid #d97706`,
               borderRadius: '16px',
-              padding: '20px 24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '20px',
-              boxShadow: '0 0 24px rgba(217, 119, 6, 0.25)',
+              padding: '16px 20px',
+              boxShadow: '0 0 24px rgba(217, 119, 6, 0.2)',
             }}>
-              <div style={{
-                width: '72px', height: '72px', borderRadius: '50%',
-                background: c.bg,
-                border: `3px solid ${c.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: `0 0 16px ${c.border}66`,
-              }}>
-                <span style={{ fontSize: '2rem', fontWeight: 900, color: c.text, lineHeight: 1 }}>{score}</span>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#d97706', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                360Score · Calificación de Riesgo PLD/FT Consolidada
               </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#d97706', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '2px' }}>
-                  360Score · Riesgo PLD/FT
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  width: '68px', height: '68px', borderRadius: '50%', flexShrink: 0,
+                  background: p.bg, border: `3px solid ${p.border}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: `0 0 18px ${p.glow}`,
+                }}>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: p.text, lineHeight: 1 }}>{score}</span>
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: c.text, lineHeight: 1.1 }}>{c.label}</div>
-                <div style={{ fontSize: '0.8rem', color: '#92400e', marginTop: '2px' }}>Nivel {score} de 5 · Calificación consolidada</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: p.text, lineHeight: 1.1 }}>{label}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#a8a29e', marginTop: '3px' }}>{sub}</div>
+                  <div style={{ marginTop: '6px', display: 'inline-block', background: p.bg, border: `1px solid ${p.border}`, borderRadius: '6px', padding: '2px 10px', fontSize: '0.72rem', color: p.text, fontWeight: 600 }}>
+                    ▶ {action}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: '0.65rem', color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Nivel</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#d97706' }}>{score} / 5</div>
+                </div>
               </div>
             </div>
           );
