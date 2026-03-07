@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MZKQ2CH7TQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MZKQ2CH7TQ');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panel Interactivo de Riesgo de Jurisdicciones</title>
@@ -244,6 +252,93 @@
           );
         };
 
+        // --- 360SCORE: Calificación de Riesgo PLD/FT Consolidada ---
+        const calculate360Score = (c) => {
+          let max = 1;
+
+          // GAFI
+          if (c.gafi && c.gafi.includes('Negra')) max = Math.max(max, 5);
+          else if (c.gafi && c.gafi.includes('Gris')) max = Math.max(max, 4);
+
+          // UE AML
+          if (c.euAml === 'Alto Riesgo') max = Math.max(max, 4);
+
+          // UE Fiscal
+          if (c.euTax && c.euTax.includes('Anexo I')) max = Math.max(max, 3);
+          else if (c.euTax && c.euTax.includes('Anexo II')) max = Math.max(max, 2);
+
+          // CPI — menor score = más corrupto = mayor riesgo
+          if (c.cpiScore !== null && c.cpiScore !== undefined) {
+            if (c.cpiScore <= 20) max = Math.max(max, 5);
+            else if (c.cpiScore <= 30) max = Math.max(max, 4);
+            else if (c.cpiScore <= 45) max = Math.max(max, 3);
+            else if (c.cpiScore <= 60) max = Math.max(max, 2);
+          }
+
+          // GTI — posición más baja = más afectado por terrorismo = mayor riesgo
+          if (c.gtiRank !== null && c.gtiRank !== undefined) {
+            if (c.gtiRank <= 5) max = Math.max(max, 5);
+            else if (c.gtiRank <= 10) max = Math.max(max, 4);
+            else if (c.gtiRank <= 20) max = Math.max(max, 3);
+            else if (c.gtiRank <= 30) max = Math.max(max, 2);
+          }
+
+          // OC Index
+          if (c.ocIndexScore !== null && c.ocIndexScore !== undefined) {
+            if (c.ocIndexScore >= 8.0) max = Math.max(max, 5);
+            else if (c.ocIndexScore >= 7.0) max = Math.max(max, 4);
+            else if (c.ocIndexScore >= 6.5) max = Math.max(max, 3);
+            else if (c.ocIndexScore >= 5.5) max = Math.max(max, 2);
+          }
+
+          // México LISR / REFIPRES
+          if (c.mexTaxHaven === 'Sí (REFIPRES)') max = Math.max(max, 2);
+
+          return max;
+        };
+
+        const Score360Badge = ({ country }) => {
+          const score = calculate360Score(country);
+          const config = {
+            5: { label: 'Prohibido',     sub: 'Riesgo Extremo', bg: '#7f1d1d', border: '#ef4444', text: '#fca5a5' },
+            4: { label: 'Muy Alto',      sub: 'Riesgo Muy Alto', bg: '#78350f', border: '#f97316', text: '#fdba74' },
+            3: { label: 'Alto',          sub: 'Riesgo Alto',    bg: '#713f12', border: '#eab308', text: '#fde047' },
+            2: { label: 'Moderado',      sub: 'Riesgo Moderado', bg: '#1a3a2a', border: '#22c55e', text: '#86efac' },
+            1: { label: 'Bajo',          sub: 'Riesgo Bajo',    bg: '#0f2027', border: '#38bdf8', text: '#7dd3fc' },
+          };
+          const c = config[score];
+          return (
+            <div style={{
+              background: `linear-gradient(135deg, #1a1200 0%, #2d1f00 100%)`,
+              border: `2px solid #d97706`,
+              borderRadius: '16px',
+              padding: '20px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
+              boxShadow: '0 0 24px rgba(217, 119, 6, 0.25)',
+            }}>
+              <div style={{
+                width: '72px', height: '72px', borderRadius: '50%',
+                background: c.bg,
+                border: `3px solid ${c.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: `0 0 16px ${c.border}66`,
+              }}>
+                <span style={{ fontSize: '2rem', fontWeight: 900, color: c.text, lineHeight: 1 }}>{score}</span>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#d97706', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '2px' }}>
+                  360Score · Riesgo PLD/FT
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: c.text, lineHeight: 1.1 }}>{c.label}</div>
+                <div style={{ fontSize: '0.8rem', color: '#92400e', marginTop: '2px' }}>Nivel {score} de 5 · Calificación consolidada</div>
+              </div>
+            </div>
+          );
+        };
+
         const OCIndexIndicator = ({ score }) => {
             if (score === null || score === undefined) {
                 return <span className="font-semibold" style={{color: colors.textMuted}}>N/A</span>;
@@ -295,6 +390,10 @@
                     <p><span className="font-semibold" style={{color: colors.textMuted}}>Nivel de Criminalidad:</span> <OCIndexIndicator score={country.ocIndexCriminality} /></p>
                   </div>
                 </div>
+              </div>
+
+              <div className="mb-6">
+                <Score360Badge country={country} />
               </div>
 
               <div>
